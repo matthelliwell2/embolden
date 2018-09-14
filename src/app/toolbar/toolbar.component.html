@@ -1,0 +1,15 @@
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="navbar-brand">
+        <fa-icon icon="bold"></fa-icon>
+    </div>
+
+    <ul class="navbar-nav mr-auto">
+        <li class="nav-item active">
+            <button class="btn btn-default" placement="right" ngbTooltip="Open" (click)="onOpen()">
+                Open
+                <fa-icon icon="folder-open"></fa-icon>
+            </button>
+            <input type="file" #file (change)="onFilesAdded()" style="display: none" accept=".svg, .txt"/>
+        </li>
+    </ul>
+</nav>
