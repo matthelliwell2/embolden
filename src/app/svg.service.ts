@@ -11,11 +11,15 @@ import * as uuid from "uuid/v4"
 })
 export class SvgService {
 
-    // A scaling factor to convert to mm
-    private static readonly PIXELS_PER_MM = 96/25.4
-
     // Container in which the svg file is rendered.
     container: Snap.Element
+
+    // SVG element inside the container
+    paper: Snap.Paper
+
+    // Viewport with as it was before we did any zooming. This is the real size of the viewport in mm. We need it to
+    // be able to generate the stitches of the correct length as they are expressed in mm.
+    unzoomedViewportWidth: number
 
     constructor() {
     }
@@ -30,22 +34,32 @@ export class SvgService {
 
         // Remove whatever we've got in there already
         // TODO add a save warning
-        let svg = this.container.select("svg") as Snap.Paper
-        if (svg !== undefined && svg !== null) {
-            svg.remove()
+        this.paper = this.container.select("svg") as Snap.Paper
+        if (this.paper !== undefined && this.paper !== null) {
+            this.paper.remove()
         }
 
         const fragment = SnapCjs.parse(fileContents)
         this.container.append(fragment)
         this.addIdToAllElements(this.container)
 
-        svg = this.container.select("svg") as Snap.Paper
-        const width = svg.attr('width')
-        const height = svg.attr('height')
+        this.paper = this.container.select("svg") as Snap.Paper
+        const width = this.paper.attr('width')
+        const height = this.paper.attr('height')
 
         if (!width.endsWith('mm') || !height.endsWith('mm')) {
             throw new Error(`Viewport units must be in mm ${width}x${height} is not supported`)
         }
+
+        const viewBox = this.paper.attr('viewBox')
+        const scalingWidth = viewBox.width / Number(width.slice(0, width.length - 2))
+        const scalingHeight = viewBox.height / Number(height.slice(0, height.length - 2))
+
+        if (Math.abs(scalingHeight - scalingWidth) > 0.01) {
+            throw new Error(`Cannot support different x and y scaling factors. Viewport=${width}x${height}. Viewbox=${viewBox}`)
+        }
+
+        this.unzoomedViewportWidth = Number(width.slice(0, width.length - 2))
     }
 
     /**
@@ -66,10 +80,8 @@ export class SvgService {
      * the lines are updated with the new coords. Returned array is the same as the array that was passed in.
      */
     elementToViewBoxCoords(element: Snap.Element, lines: Line[][]): Line[][] {
-        // The lines are already in element coords so have had the local matrix applied. To get back to user we need
-        // to know all transforms applied to the element. The global transform contains a scaling of 3.7 which is to
-        // try and convert pixels to mm at a nominal 96dpi. We there need to remove this scaling to get to pixels.
-        // This scaling is not affected by the viewport and viewbox sizes.
+        // The lines are already in element coords so have had the local matrix applied. To get back to viewbox coords
+        // we need to know all transforms applied to the element.
         const matrix = this.getElementToViewBoxMatrix(element)
 
         lines.forEach(row => {
@@ -79,103 +91,95 @@ export class SvgService {
             })
         })
 
-        console.log(lines)
         return lines
     }
 
 
     /**
-     * We want to specify stitch length etc in mm. To be able to calculate stitch positions inside an element we need
-     * to know what length this will be in the element coordinates. The number of mm specified is a real number and
-     * not a nominal value based on 96dpi therefore we need to look at the viewport size to work out the correct
-     * number of pixels.
-     * @param mm
+     * The distance between stitch rows is defined in mm. To be able to generatet the scanlines, which are in element
+     * coords, we need to convert mm to element coords. The viewport is defined in mm but may have been resized due
+     * to zooming so we need to know the original viewport size in mm to do the calculation.
      */
-    mmToElementCoords(element: Snap.Element, mm: number): number {
-        // apply the element transforms, excluding the seemingly hardcoded 96dpi scaling factor the global transform has
+    mmToElementLength(element: Snap.Element, mm: number): number {
+        const viewboxMM = this.mmToViewBoxLength(mm)
         const matrix = this.getViewBoxToElementMatrix(element)
 
-        const width = matrix.x(0, mm) - matrix.x(0, 0)
-        const length = matrix.y(0, mm) - matrix.y(0, 0)
+        const width = matrix.x(0, viewboxMM) - matrix.x(0, 0)
+        const length = matrix.y(0, viewboxMM) - matrix.y(0, 0)
 
-        return Math.sqrt(width * width + length * length)
+        const number = Math.sqrt(width * width + length * length)
+        console.log(`${mm}mm in element coords = ${number}`)
+        return number
+    }
+
+    mmToViewBoxLength(mm: number): number {
+        const width = this.paper.attr('width')
+
+        const viewBox = this.paper.attr('viewBox')
+
+        const scalingWidth = viewBox.width / Number(width.slice(0, width.length - 2))
+
+        const scaledValue = scalingWidth * mm * this.zoomScalingFactor()
+        console.log("zoom = ", this.zoomScalingFactor())
+        console.log(`${mm}mm in viewbox coords = ${scaledValue}`)
+
+        return scaledValue
+    }
+
+    private zoomScalingFactor(): number {
+        const viewportWidthMM = this.paper.attr('width')
+        const currentViewportWidth = Number(viewportWidthMM.slice(0, viewportWidthMM.length - 2))
+        return currentViewportWidth/this.unzoomedViewportWidth
     }
 
     private getViewBoxToElementMatrix(element: Snap.Element): Snap.Matrix {
-        const matrix = new SnapCjs.Matrix() as Snap.Matrix
-        matrix.scale(SvgService.PIXELS_PER_MM, SvgService.PIXELS_PER_MM)
-        matrix.add(element.transform().globalMatrix.invert())
-
-        return matrix
+        return this.getElementToViewBoxMatrix(element).invert()
     }
 
     /**
      * Converts from element coords to viewbox coords. If there is no scaling applied this should return just a simple
      * 1:1 scaling factor.
+     *
+     * To do this we get the global transform applied to the element and
+     * then subtract the global transform applied to the paper itself, eg the paper may have been scaled to fit inside
+     * the containing div which doesn't affect the coords we are using.
      */
     private getElementToViewBoxMatrix(element: Snap.Element): Snap.Matrix {
-        const matrix = this.getElementToViewportMatrix(element)
-        matrix.add(this.getViewportToViewBoxMatrix(element.paper!))
+        const matrix = element.transform().globalMatrix
+        matrix.add(this.paper.transform().globalMatrix.invert())
         return matrix
     }
 
-    /**
-     * Converts from element to the viewport coords by apply the global transform. However this transform has an
-     * additional scaling of about 97/2.54 as the viewport coords are in mm and the browser assumes there are 97dpi.
-     * @param element
-     */
-    private getElementToViewportMatrix(element: Snap.Element): Snap.Matrix {
-        const matrix = new SnapCjs.Matrix() as Snap.Matrix
-        matrix.scale(1/SvgService.PIXELS_PER_MM,1/SvgService.PIXELS_PER_MM)
-        matrix.add(element.transform().globalMatrix)
-
-        return matrix
+    zoomIn() {
+        this.zoom(1.2)
     }
 
-    /**
-     * Translates from the viewport coords to the viewbox coords by applying a simple scaling factor
-     */
-    private getViewportToViewBoxMatrix(paper: Snap.Paper): Snap.Matrix {
-        const width = paper.attr('width')
-        const height = paper.attr('height')
+    zoomOut() {
+        this.zoom(0.8)
+    }
 
-        const viewBox = paper.attr('viewBox')
-
-        const scalingWidth = viewBox.width / Number(width.slice(0, width.length - 2))
-        const scalingHeight = viewBox.height / Number(height.slice(0, height.length - 2))
-
-        if (Math.abs(scalingHeight - scalingWidth) > 0.01) {
-            throw new Error(`Cannot support different x and y scaling factors. Viewport=${width}x${height}. Viewbox=${viewBox}`)
+    private zoom(factor: number) {
+        if (this.paper === undefined) {
+            return
         }
 
-        const matrix = new SnapCjs.Matrix() as Snap.Matrix
-        matrix.scale(scalingWidth, scalingHeight)
-        return matrix
-    }
+        /*const bbox = this.paper.attr('viewBox')
+        this.paper.attr({
+            viewBox: {x: bbox.x / factor, y: bbox.y / factor, width: bbox.width / factor, height: bbox.height / factor},
+        })*/
 
-    zoomIn(paper: Snap.Paper) {
-        this.zoom(paper, 1.2)
-    }
-
-    zoomOut(paper: Snap.Paper) {
-        this.zoom(paper, 0.8)
-    }
-
-    private zoom(paper: Snap.Paper, factor: number) {
-        const w1 = paper.attr('width')
+        const w1 = this.paper.attr('width')
         const w2 = Number(w1.slice(0, w1.length - 2))
 
-        const h1 = paper.attr('height')
+        const h1 = this.paper.attr('height')
         const h2 = Number(h1.slice(0, h1.length - 2))
 
         //const box = svg.attr('viewBox')
         // TODO do this properly
-        paper.attr({
-           // viewBox: {x: box.x, y:box.y, width: box.width / factor, height: box.height /factor},
+        this.paper.attr({
+            // viewBox: {x: box.x, y:box.y, width: box.width / factor, height: box.height /factor},
             width: `${w2 * factor}mm`, height: `${h2 * factor}mm`
         })
-
-        // TODO scaling
     }
 
     /**

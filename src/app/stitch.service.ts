@@ -8,8 +8,8 @@ import {ScanLinesService} from "./scan-lines.service"
 })
 export class StitchService {
 
-    private static readonly ROW_HEIGHT = 2
-    private static readonly STITCH_LENGTH = 5
+    private static readonly ROW_HEIGHT = 0.4
+    private static readonly STITCH_LENGTH = 3.5
     private static readonly MIN_STITCH_LENGTH = 1.5
 
     constructor(private svgService: SvgService,
@@ -34,8 +34,8 @@ export class StitchService {
     private generateAllStitchPoints(element: Snap.Element, scanLines: Line[][]): Coord[] {
         let allStitches: Coord[] = []
         let leftToRight = true
-        const stitchLength = this.svgService.mmToElementCoords(element, StitchService.STITCH_LENGTH)
-        const minStitchLength = this.svgService.mmToElementCoords(element, StitchService.MIN_STITCH_LENGTH)
+        const stitchLength = this.svgService.mmToViewBoxLength(StitchService.STITCH_LENGTH)
+        const minStitchLength = this.svgService.mmToViewBoxLength(StitchService.MIN_STITCH_LENGTH)
         scanLines.forEach(columnOfLines => {
             columnOfLines.forEach(line => {
                 const stitches = this.generateStitchPointsForLine(line, leftToRight, stitchLength, minStitchLength)

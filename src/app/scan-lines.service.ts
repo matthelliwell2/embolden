@@ -97,7 +97,7 @@ export class ScanLinesService {
      * TODO this isn't quite right? - check it covers whole of element. Always need a scanline at the top and bottom
      */
     private calculateLineSeparation(element: Snap.Element, bbox: Snap.BBox, heightMM: number): number {
-        const seperation = this.svgService.mmToElementCoords(element, heightMM)
+        const seperation = this.svgService.mmToElementLength(element, heightMM)
         const numLines = Math.floor(bbox.height / seperation)
         return bbox.height / numLines
     }

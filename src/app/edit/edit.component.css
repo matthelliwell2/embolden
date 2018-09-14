@@ -1,0 +1,11 @@
+#svg-container {
+    border:3px solid green;
+    margin:0 auto;
+    overflow: auto;
+}
+
+:host ::ng-deep svg {
+    background:yellow;
+    border:3px solid yellow;
+    width: 100%;
+}

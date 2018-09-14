@@ -15,8 +15,6 @@ import {Coord, SvgService} from "../svg.service"
 })
 export class EditComponent implements OnInit {
 
-    private paper: Snap.Paper
-
     private elementSelector = new ElementSelector()
 
     constructor(private stitchService: StitchService, private svgService: SvgService) {
@@ -27,17 +25,15 @@ export class EditComponent implements OnInit {
 
         this.svgService.container = container
 
-        // this.paper = await this.svgService.loadFile(container,'assets/diamond.svg')
-
         container.click(this.onClick)
     }
 
     @HostListener('mousewheel', ['$event'])
     onZoom(event: MouseWheelEvent) {
         if (event.deltaY > 0) {
-            this.svgService.zoomOut(this.paper)
+            this.svgService.zoomOut()
         } else if (event.deltaY < 0) {
-            this.svgService.zoomIn(this.paper)
+            this.svgService.zoomIn()
         }
     }
 
@@ -51,16 +47,17 @@ export class EditComponent implements OnInit {
         this.toPath(element, stitchPoints)
     }
 
+    // For the moment just draw out some stitches so we can see where they are.
     private toPath(element: Snap.Element, points: Coord[]): void {
-        const radius = this.svgService.mmToElementCoords(element, 0.2)
+        const radius = this.svgService.mmToViewBoxLength(0.2)
         points.forEach(point => {
-            const circle = this.paper.circle(point.x, point.y, radius)
+            const circle = this.svgService.paper.circle(point.x, point.y, radius)
             circle.attr({stroke: "#00F", fill: "none", strokeWidth: "0.1"})
         })
 
         for (let i = 0; i < points.length; ++i) {
-            const line = this.paper.line(points[i].x, points[i].y, points[i + 1].x, points[i + 1].y)
-            line.attr({stroke: "#00F", strokeWidth: "0.1"})
+            const line = this.svgService.paper.line(points[i].x, points[i].y, points[i + 1].x, points[i + 1].y)
+            line.attr({stroke: "#F0F", strokeWidth: "1"})
         }
 
        /* let result = `M${points[0].x},${points[0].y} `
