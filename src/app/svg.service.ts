@@ -18,6 +18,10 @@ export class SvgService {
     // SVG element inside the container
     paper: Snap.Paper
 
+    private dragging = false
+    private dragStartPos: Coord
+
+
     // Viewport with as it was before we did any zooming. This is the real size of the viewport in mm. We need it to
     // be able to generate the stitches of the correct length as they are expressed in mm.
     unzoomedViewportWidth: number
@@ -61,6 +65,35 @@ export class SvgService {
         }
 
         this.unzoomedViewportWidth = Number(width.slice(0, width.length - 2))
+    }
+
+    dragStart(x: number, y: number): void {
+        console.log('drag start', x,y)
+        this.dragStartPos = {x: x, y: y}
+        this.dragging = true
+
+    }
+
+    dragEnd(x: number, y: number): void {
+        if (!this.dragging) {
+            return
+        }
+
+        console.log('drag end', x,y)
+
+        const xmove = x - this.dragStartPos.x
+        const ymove = y - this.dragStartPos.y
+
+        const viewbox = this.paper.attr("viewBox")
+        console.log("old view box", viewbox)
+        viewbox.x -= xmove
+        viewbox.y -= ymove
+
+        this.paper.attr({viewBox: `${viewbox.x} ${viewbox.y} ${viewbox.width} ${viewbox.height}`})
+
+        console.log("new viewbox", this.paper.attr("viewBox"))
+        this.dragging = false
+
     }
 
     /**
@@ -129,7 +162,6 @@ export class SvgService {
         const length = matrix.y(0, viewboxMM) - matrix.y(0, 0)
 
         const number = Math.sqrt(width * width + length * length)
-        console.log(`${mm}mm in element coords = ${number}`)
         return number
     }
 
@@ -141,8 +173,6 @@ export class SvgService {
         const scalingWidth = viewBox.width / Number(width.slice(0, width.length - 2))
 
         const scaledValue = scalingWidth * mm * this.zoomScalingFactor()
-        console.log("zoom = ", this.zoomScalingFactor())
-        console.log(`${mm}mm in viewbox coords = ${scaledValue}`)
 
         return scaledValue
     }
@@ -150,7 +180,7 @@ export class SvgService {
     private zoomScalingFactor(): number {
         const viewportWidthMM = this.paper.attr('width')
         const currentViewportWidth = Number(viewportWidthMM.slice(0, viewportWidthMM.length - 2))
-        return currentViewportWidth/this.unzoomedViewportWidth
+        return currentViewportWidth / this.unzoomedViewportWidth
     }
 
     private getViewBoxToElementMatrix(element: Snap.Element): Snap.Matrix {

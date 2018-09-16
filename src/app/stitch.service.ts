@@ -55,7 +55,6 @@ export class StitchService {
             })
         })
 
-        console.log('all stitches', allStitches)
         return allStitches
     }
 

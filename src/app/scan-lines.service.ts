@@ -34,7 +34,6 @@ export class ScanLinesService {
             .map(this.toLines)
 
         const sortedLines = this.sortIntoColumns(lines)
-        console.log('sorted lines', sortedLines)
         return this.svgService.elementToViewBoxCoords(element, sortedLines)
     }
 
@@ -137,7 +136,6 @@ export class ScanLinesService {
             const scanLinePath = this.toPath(scanLine)
             intersections = SnapCjs.path.intersection(scanLinePath, elementPath)
             if (intersections.length % 2 !== 0) {
-                console.log('Adjusting scanline at', scanLine.start.y, 'by', dy)
                 scanLine.start.y += dy
                 scanLine.end.y += dy
             }
