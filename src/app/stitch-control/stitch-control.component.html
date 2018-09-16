@@ -1,0 +1,10 @@
+<div class="mt-2" *ngIf="selectedElement !== undefined">
+    <div ngbDropdown class="d-inline-block">
+        <label>Fill: </label>
+        <button class="btn btn-outline-primary" id="fillType" ngbDropdownToggle>{{selectedElement!.fillType}}</button>
+        <div ngbDropdownMenu aria-labelledby="fillType">
+            <button *ngFor="let type of fillTypes" class="dropdown-item" (click)="onFillTypeSelected(type)">{{type}}
+            </button>
+        </div>
+    </div>
+</div>

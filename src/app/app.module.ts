@@ -9,6 +9,7 @@ import {faBold, faFolderOpen} from '@fortawesome/free-solid-svg-icons'
 import {ToolbarComponent} from './toolbar/toolbar.component'
 import {PropertiesBarComponent} from './properties-bar/properties-bar.component'
 import {FormsModule} from "@angular/forms"
+import {StitchControlComponent} from './stitch-control/stitch-control.component'
 
 library.add(faFolderOpen, faBold)
 
@@ -17,7 +18,8 @@ library.add(faFolderOpen, faBold)
         AppComponent,
         EditComponent,
         ToolbarComponent,
-        PropertiesBarComponent
+        PropertiesBarComponent,
+        StitchControlComponent
     ],
     imports: [
         BrowserModule,

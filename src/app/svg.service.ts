@@ -4,7 +4,8 @@ import * as SnapCjs from 'snapsvg-cjs'
 import * as uuid from "uuid/v4"
 
 /**
- * This service is responsible for all manipulation and logic around the svg file
+ * This service is responsible for all manipulation and logic around the svg file. It contains low level items around
+ * scaling etc. A separate service is responsible for rendering stitches.
  */
 @Injectable({
     providedIn: 'root'
@@ -94,6 +95,26 @@ export class SvgService {
         return lines
     }
 
+    /**
+     * Converts a bounding box in element coords to the corresponding rectangle in viewbox coords
+     */
+    bboxToViewBoxRect(element: Snap.Element, bbox: Snap.BBox): Rectangle {
+        const matrix = this.getElementToViewBoxMatrix(element)
+
+        const x = matrix.x(bbox.x, bbox.y)
+        const y = matrix.y(bbox.x, bbox.y)
+        const x2 = matrix.x(bbox.x + bbox.width, bbox.y + bbox.height)
+        const y2 = matrix.y(bbox.x + bbox.width, bbox.y + bbox.height)
+        const width = Math.abs(x2 - x)
+        const height = Math.abs(y2 - y)
+
+        return {
+            x: x,
+            y: y,
+            width: width,
+            height: height
+        }
+    }
 
     /**
      * The distance between stitch rows is defined in mm. To be able to generatet the scanlines, which are in element
@@ -145,8 +166,9 @@ export class SvgService {
      * the containing div which doesn't affect the coords we are using.
      */
     private getElementToViewBoxMatrix(element: Snap.Element): Snap.Matrix {
-        const matrix = element.transform().globalMatrix
-        matrix.add(this.paper.transform().globalMatrix.invert())
+        const matrix = this.paper.transform().globalMatrix.invert()
+        matrix.add(element.transform().globalMatrix)
+
         return matrix
     }
 
@@ -163,19 +185,12 @@ export class SvgService {
             return
         }
 
-        /*const bbox = this.paper.attr('viewBox')
-        this.paper.attr({
-            viewBox: {x: bbox.x / factor, y: bbox.y / factor, width: bbox.width / factor, height: bbox.height / factor},
-        })*/
-
         const w1 = this.paper.attr('width')
         const w2 = Number(w1.slice(0, w1.length - 2))
 
         const h1 = this.paper.attr('height')
         const h2 = Number(h1.slice(0, h1.length - 2))
 
-        //const box = svg.attr('viewBox')
-        // TODO do this properly
         this.paper.attr({
             // viewBox: {x: box.x, y:box.y, width: box.width / factor, height: box.height /factor},
             width: `${w2 * factor}mm`, height: `${h2 * factor}mm`
@@ -203,4 +218,11 @@ export interface Coord {
 export interface Line {
     start: Coord
     end: Coord
+}
+
+export interface Rectangle {
+    x: number
+    y: number
+    width: number
+    height: number
 }

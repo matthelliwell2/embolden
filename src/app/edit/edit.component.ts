@@ -1,9 +1,9 @@
 import {Component, HostListener, OnInit} from '@angular/core'
 import * as SnapCjs from 'snapsvg-cjs'
 import * as Snap from 'snapsvg'
-import {ElementSelector} from "./ElementSelector"
 import {StitchService} from "../stitch.service"
-import {Coord, SvgService} from "../svg.service"
+import {SvgService} from "../svg.service"
+import {ElementSelectorService} from "./element-selector.service"
 
 /**
  * This component is the central component that renders the svg and lets the user edit stitches.
@@ -15,9 +15,11 @@ import {Coord, SvgService} from "../svg.service"
 })
 export class EditComponent implements OnInit {
 
-    private elementSelector = new ElementSelector()
+    constructor(private stitchService: StitchService,
+                private svgService: SvgService,
+                private elementSelectorService: ElementSelectorService) {
 
-    constructor(private stitchService: StitchService, private svgService: SvgService) {
+        console.log(this.stitchService)
     }
 
     async ngOnInit() {
@@ -25,6 +27,7 @@ export class EditComponent implements OnInit {
 
         this.svgService.container = container
 
+        // Add a click callback so we can use clicks to select elements
         container.click(this.onClick)
     }
 
@@ -40,15 +43,11 @@ export class EditComponent implements OnInit {
     private readonly onClick = (event: MouseEvent) => {
         const element = SnapCjs(event.target) as Snap.Element
 
-        this.elementSelector.select(element)
-
-        const stitchPoints = this.stitchService.fill(element)
-
-        this.toPath(element, stitchPoints)
+        this.elementSelectorService.select(element)
     }
 
     // For the moment just draw out some stitches so we can see where they are.
-    private toPath(element: Snap.Element, points: Coord[]): void {
+/*    private toPath(element: Snap.Element, points: Coord[]): void {
         const radius = this.svgService.mmToViewBoxLength(0.2)
         points.forEach(point => {
             const circle = this.svgService.paper.circle(point.x, point.y, radius)
@@ -60,11 +59,11 @@ export class EditComponent implements OnInit {
             line.attr({stroke: "#F0F", strokeWidth: "1"})
         }
 
-       /* let result = `M${points[0].x},${points[0].y} `
+       /!* let result = `M${points[0].x},${points[0].y} `
 
         // TODO ignore first coord
         const pathElements = points.map(point => `L${point.x},${point.y}`)
 
-        return result.concat(... pathElements)*/
-    }
+        return result.concat(... pathElements)*!/
+    }*/
 }

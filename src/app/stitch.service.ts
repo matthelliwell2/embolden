@@ -2,7 +2,12 @@ import * as Snap from 'snapsvg'
 import {Injectable} from '@angular/core'
 import {Coord, Line, SvgService} from "./svg.service"
 import {ScanLinesService} from "./scan-lines.service"
+import {FillType} from "./models"
 
+/**
+ * This class generates stitches for elements acccording to the specified style, fill type etc. It just returns
+ * stitches without attempting to draw them or store them.
+ */
 @Injectable({
     providedIn: 'root'
 })
@@ -17,7 +22,11 @@ export class StitchService {
     }
 
 
-    fill(element: Snap.Element): Coord[] {
+    fill(element: Snap.Element, type: FillType): Coord[] {
+        if (type === FillType.NONE) {
+            return []
+        }
+
         if (element.type !== 'path') {
             throw new Error(`Elements of type ${element.type} are not supported`)
         }

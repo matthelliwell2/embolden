@@ -42,6 +42,7 @@
         inkscape:label="Layer 1"
         inkscape:groupmode="layer"
         id="layer1"
+        transform="scale(0.5)"
     >
         <path
             style="fill:#00f4f4;fill-opacity:1;stroke-width:0.27025706"

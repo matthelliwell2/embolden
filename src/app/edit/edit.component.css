@@ -2,10 +2,37 @@
     border:3px solid green;
     margin:0 auto;
     overflow: auto;
+    background: #f0f0f0;
 }
 
 :host ::ng-deep svg {
-    background:yellow;
-    border:3px solid yellow;
     width: 100%;
+}
+
+:host ::ng-deep .selection-rect1 {
+    fill: none;
+    stroke: white;
+    stroke-width: 1;
+}
+
+:host ::ng-deep .selection-rect2 {
+    fill: none;
+    stroke: black;
+    stroke-width: 1;
+    stroke-dasharray: 5;
+}
+
+:host ::ng-deep .selected-element {
+    animation-name: highlight;
+    animation-duration: 200ms;
+    animation-iteration-count: 1;
+}
+
+@keyframes highlight {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.25;
+    }
 }
