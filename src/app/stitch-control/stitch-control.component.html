@@ -3,8 +3,7 @@
         <label>Fill: </label>
         <button class="btn btn-outline-primary" id="fillType" ngbDropdownToggle>{{selectedElement!.fillType}}</button>
         <div ngbDropdownMenu aria-labelledby="fillType">
-            <button *ngFor="let type of fillTypes" class="dropdown-item" (click)="onFillTypeSelected(type)">{{type}}
-            </button>
+            <button *ngFor="let type of fillTypes" class="dropdown-item" (click)="onFillTypeSelected(type)">{{type}}</button>
         </div>
     </div>
 </div>
