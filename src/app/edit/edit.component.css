@@ -3,6 +3,7 @@
     margin:0 auto;
     overflow: auto;
     background: #f0f0f0;
+    height: 90vh;
 }
 
 :host ::ng-deep svg {

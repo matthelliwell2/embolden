@@ -36,6 +36,7 @@ export class StitchService {
 
         const stitchPoints = this.generateAllStitchPoints(scanLines)
 
+        console.log("Num stitches =", stitchPoints.length)
         return stitchPoints
     }
 

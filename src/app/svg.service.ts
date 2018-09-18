@@ -215,16 +215,7 @@ export class SvgService {
             return
         }
 
-        const w1 = this.paper.attr('width')
-        const w2 = Number(w1.slice(0, w1.length - 2))
-
-        const h1 = this.paper.attr('height')
-        const h2 = Number(h1.slice(0, h1.length - 2))
-
-        this.paper.attr({
-            // viewBox: {x: box.x, y:box.y, width: box.width / factor, height: box.height /factor},
-            width: `${w2 * factor}mm`, height: `${h2 * factor}mm`
-        })
+        this.paper.transform(this.paper.transform().localMatrix.scale(factor, factor).toTransformString())
     }
 
     /**
