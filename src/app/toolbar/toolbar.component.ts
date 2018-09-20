@@ -1,4 +1,4 @@
-import {Component, OnInit, ViewChild} from '@angular/core'
+import {Component, HostListener, OnInit, ViewChild} from '@angular/core'
 import {SvgService} from "../svg.service"
 
 @Component({
@@ -7,6 +7,9 @@ import {SvgService} from "../svg.service"
     styleUrls: ['./toolbar.component.css']
 })
 export class ToolbarComponent implements OnInit {
+
+    topPos = 10
+    leftPos = 25
 
     // This is a reference to the hidden input type='file' component
     @ViewChild('file') file
@@ -24,6 +27,9 @@ export class ToolbarComponent implements OnInit {
         this.file.nativeElement.click()
     }
 
+    /**
+     * Called by the file selection dialog when we've got a file to load
+     */
     onFilesAdded() {
         const r = new FileReader()
         r.onload = (file) => {
@@ -31,5 +37,12 @@ export class ToolbarComponent implements OnInit {
         }
 
         r.readAsText(this.file.nativeElement.files[0])
+    }
+
+    @HostListener('dragstart', ['$event'])
+    @HostListener('dragend', ['$event'])
+    onDragEnd(event) {
+        this.leftPos = event.clientX
+        this.topPos = event.clientY
     }
 }

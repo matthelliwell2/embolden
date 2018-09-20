@@ -1,15 +1,22 @@
-<nav class="navbar navbar-expand-lg navbar-light bg-light">
+<nav class="navbar navbar-expand-lg navbar-light bg-light ui-draggable border border-info rounded" draggable="true" [style.top.px]="topPos" [style.left.px]="leftPos">
     <div class="navbar-brand">
         <fa-icon icon="bold"></fa-icon>
     </div>
 
-    <ul class="navbar-nav mr-auto">
-        <li class="nav-item active">
-            <button class="btn btn-default" placement="right" ngbTooltip="Open" (click)="onOpen()">
-                Open
-                <fa-icon icon="folder-open"></fa-icon>
-            </button>
-            <input type="file" #file (change)="onFilesAdded()" style="display: none" accept=".svg, .txt"/>
-        </li>
-    </ul>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav mr-auto">
+            <li class="nav-item active">
+                <button class="btn btn-default" placement="right" ngbTooltip="Open" (click)="onOpen()">
+                    Open
+                    <fa-icon icon="folder-open"></fa-icon>
+                </button>
+                <input type="file" #file (change)="onFilesAdded()" style="display: none" accept=".svg, .txt"/>
+            </li>
+        </ul>
+    </div>
 </nav>

@@ -17,7 +17,7 @@ export class ElementSelectorService {
     }
 
     select(element: Snap.Element) {
-        if (this.selectedElement === element) {
+        if (this.selectedElement === element || element.type === "DIV") {
             this.unselect()
         } else {
             this.unselect()

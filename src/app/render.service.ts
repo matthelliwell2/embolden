@@ -31,7 +31,7 @@ export class RenderService {
             element.group!.add(circle)
         })
 
-        for (let i = 0; i < element.stitches.length; ++i) {
+        for (let i = 0; i < element.stitches.length - 1; ++i) {
             const line = paper.line(element.stitches[i].x, element.stitches[i].y, element.stitches[i + 1].x, element.stitches[i + 1].y)
             line.attr({stroke: "#F0F", strokeWidth: "1", "vector-effect": "non-scaling-stroke"})
             element.group!.add(line)

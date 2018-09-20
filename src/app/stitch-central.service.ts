@@ -19,6 +19,8 @@ export class StitchCentralService {
      */
     private elementSelectionSubject = new Subject<ElementProperties>()
 
+    selectedElement: ElementProperties | undefined
+
     /**
      * A map of element id to the stitching properties of that element. This acts as the central control structure for
      * the stitching
@@ -43,14 +45,14 @@ export class StitchCentralService {
      */
     elementSelected(element: Snap.Element) {
         const id = element.attr("id")
-        let props = this.elementProperties[id]
-        if (props === undefined) {
-            props = new ElementProperties(element)
-            this.elementProperties[id] = props
+        this.selectedElement = this.elementProperties[id]
+        if (this.selectedElement === undefined) {
+            this.selectedElement = new ElementProperties(element)
+            this.elementProperties[id] = this.selectedElement
         }
 
-        props.isSelected = true
-        this.elementSelectionSubject.next(props)
+        this.selectedElement.isSelected = true
+        this.elementSelectionSubject.next(this.selectedElement)
     }
 
     /**
@@ -65,6 +67,7 @@ export class StitchCentralService {
         }
 
         props.isSelected = false
+        this.selectedElement = undefined
         this.elementSelectionSubject.next(props)
     }
 

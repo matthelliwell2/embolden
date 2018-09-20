@@ -1,1 +1,5 @@
-
+.navbar {
+    cursor: move;
+    z-index: 1;
+    position: absolute;
+}
