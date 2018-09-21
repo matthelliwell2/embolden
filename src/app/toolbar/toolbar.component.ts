@@ -11,10 +11,15 @@ export class ToolbarComponent implements OnInit {
     topPos = 10
     leftPos = 25
 
+    private initialTopPos: number
+    private initialLeftPos: number
+    private initialClientX: number
+    private initialClientY: number
+
     // This is a reference to the hidden input type='file' component
     @ViewChild('file') file
 
-    constructor(private svgService: SvgService) {
+    constructor(public svgService: SvgService) {
     }
 
     ngOnInit() {
@@ -39,10 +44,22 @@ export class ToolbarComponent implements OnInit {
         r.readAsText(this.file.nativeElement.files[0])
     }
 
+    onRestore() {
+        this.svgService.restoreSizeAndPosition()
+    }
+
+
     @HostListener('dragstart', ['$event'])
+    onDragStart(event) {
+        this.initialLeftPos = this.leftPos
+        this.initialTopPos = this.topPos
+        this.initialClientX = event.clientX
+        this.initialClientY = event.clientY
+    }
+
     @HostListener('dragend', ['$event'])
     onDragEnd(event) {
-        this.leftPos = event.clientX
-        this.topPos = event.clientY
+        this.leftPos = this.initialLeftPos + event.clientX - this.initialClientX
+        this.topPos = this.initialTopPos + event.clientY - this.initialClientY
     }
 }

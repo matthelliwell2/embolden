@@ -2,4 +2,5 @@
     cursor: move;
     z-index: 1;
     position: absolute;
+    border-radius: 1rem
 }

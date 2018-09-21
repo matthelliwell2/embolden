@@ -1,4 +1,4 @@
-<nav class="navbar navbar-expand-lg navbar-light bg-light ui-draggable border border-info rounded" draggable="true" [style.top.px]="topPos" [style.left.px]="leftPos">
+<nav class="navbar navbar-expand-lg navbar-light bg-light ui-draggable border border-info" draggable="true" [style.top.px]="topPos" [style.left.px]="leftPos">
     <div class="navbar-brand">
         <fa-icon icon="bold"></fa-icon>
     </div>
@@ -10,12 +10,18 @@
 
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
         <ul class="navbar-nav mr-auto">
-            <li class="nav-item active">
-                <button class="btn btn-default" placement="right" ngbTooltip="Open" (click)="onOpen()">
+            <li class="nav-item active mr-3">
+                <button class="btn" placement="right" ngbTooltip="Open" (click)="onOpen()">
                     Open
                     <fa-icon icon="folder-open"></fa-icon>
                 </button>
                 <input type="file" #file (change)="onFilesAdded()" style="display: none" accept=".svg, .txt"/>
+            </li>
+            <li class="nav-item active">
+                <button class="btn" placement="right" ngbTooltip="Restore" (click)="onRestore()" [disabled]="svgService.paper === undefined">
+                    Restore
+                    <fa-icon icon="window-restore"></fa-icon>
+                </button>
             </li>
         </ul>
     </div>

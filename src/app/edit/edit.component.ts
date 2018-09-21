@@ -37,13 +37,6 @@ export class EditComponent implements OnInit {
         }
     }
 
-    @HostListener('dragstart', ['$event'])
-    onDragStart() {
-        if (this.svgService.paper !== undefined) {
-            this.svgService.paper.drag()
-        }
-    }
-
     private readonly onClick = (event: MouseEvent) => {
         const element = SnapCjs(event.target) as Snap.Element
 

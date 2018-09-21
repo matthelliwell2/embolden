@@ -17,7 +17,8 @@ export class ElementSelectorService {
     }
 
     select(element: Snap.Element) {
-        if (this.selectedElement === element || element.type === "DIV") {
+        const type = element.type.toLowerCase()
+        if (this.selectedElement === element || type === "div" || type === "svg") {
             this.unselect()
         } else {
             this.unselect()

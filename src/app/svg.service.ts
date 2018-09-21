@@ -18,8 +18,8 @@ export class SvgService {
     // SVG element inside the container
     paper: Snap.Paper
 
-    private dragging = false
-    private dragStartPos: Coord
+    // Initial transform matrix incase we need to reset things
+    initialLocalMatrix: Snap.Matrix
 
 
     // Viewport with as it was before we did any zooming. This is the real size of the viewport in mm. We need it to
@@ -65,35 +65,14 @@ export class SvgService {
         }
 
         this.unzoomedViewportWidth = Number(width.slice(0, width.length - 2))
+
+        this.initialLocalMatrix = this.paper.transform().localMatrix
+
+        this.paper.drag()
     }
 
-    dragStart(x: number, y: number): void {
-        console.log('drag start', x,y)
-        this.dragStartPos = {x: x, y: y}
-        this.dragging = true
-
-    }
-
-    dragEnd(x: number, y: number): void {
-        if (!this.dragging) {
-            return
-        }
-
-        console.log('drag end', x,y)
-
-        const xmove = x - this.dragStartPos.x
-        const ymove = y - this.dragStartPos.y
-
-        const viewbox = this.paper.attr("viewBox")
-        console.log("old view box", viewbox)
-        viewbox.x -= xmove
-        viewbox.y -= ymove
-
-        this.paper.attr({viewBox: `${viewbox.x} ${viewbox.y} ${viewbox.width} ${viewbox.height}`})
-
-        console.log("new viewbox", this.paper.attr("viewBox"))
-        this.dragging = false
-
+    restoreSizeAndPosition() {
+        this.paper.transform(this.initialLocalMatrix.toTransformString())
     }
 
     /**
