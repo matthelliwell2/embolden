@@ -1,7 +1,7 @@
 import {Component, OnInit} from '@angular/core'
 import {StitchCentralService} from "../stitch-central.service"
 import {Subscription} from "rxjs"
-import {ElementProperties, FillType} from "../models"
+import {ElementProperties, SatinFillType} from "../models"
 
 @Component({
     selector: 'app-stitch-control',
@@ -10,7 +10,7 @@ import {ElementProperties, FillType} from "../models"
 })
 export class StitchControlComponent implements OnInit {
 
-    fillTypes = Object.keys(FillType)
+    fillTypes = Object.keys(SatinFillType)
     private subscription: Subscription
     selectedElement: ElementProperties | undefined
 
@@ -29,7 +29,7 @@ export class StitchControlComponent implements OnInit {
     }
 
     onFillTypeSelected(type: string) {
-        this.selectedElement!.fillType = FillType[type]
+        this.selectedElement!.fillType = SatinFillType[type]
         this.stitchCentralService.fill(this.selectedElement!)
     }
 

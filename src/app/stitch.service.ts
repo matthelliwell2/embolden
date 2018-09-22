@@ -2,7 +2,7 @@ import * as Snap from 'snapsvg'
 import {Injectable} from '@angular/core'
 import {Coord, Line, SvgService} from "./svg.service"
 import {ScanLinesService} from "./scan-lines.service"
-import {FillType} from "./models"
+import {SatinFillType} from "./models"
 
 /**
  * This class generates stitches for elements acccording to the specified style, fill type etc. It just returns
@@ -22,8 +22,8 @@ export class StitchService {
     }
 
 
-    fill(element: Snap.Element, type: FillType): Coord[] {
-        if (type === FillType.NONE) {
+    fill(element: Snap.Element, type: SatinFillType): Coord[] {
+        if (type === SatinFillType.None) {
             return []
         }
 

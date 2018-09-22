@@ -8,7 +8,7 @@ export class ElementProperties {
     constructor(public element: Snap.Element) {}
 
     stitches: Coord[] = []
-    fillType: FillType = FillType.NONE
+    fillType: SatinFillType = SatinFillType.None
     isSelected: boolean = false
     group: Snap.Element | undefined = undefined
 }
@@ -16,7 +16,7 @@ export class ElementProperties {
 /**
  * The available type of stitch filling
  */
-export enum FillType {
-    NONE = "None",
-    SATIN = "Satin"
+export enum SatinFillType {
+    None = "None",
+    Natural = "Natural"
 }
