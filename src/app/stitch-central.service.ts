@@ -4,6 +4,7 @@ import {Subject, Subscription} from 'rxjs'
 import {StitchService} from "./stitch.service"
 import {RenderService} from "./render.service"
 import {ElementProperties} from "./models"
+import {SettingsService} from "./settings.service"
 
 /**
  * This service coordinates actions between the various parts of the system and keeps track of the state of the system
@@ -15,7 +16,7 @@ import {ElementProperties} from "./models"
 export class StitchCentralService {
 
     /**
-     * rx/js subject scription to selection events.
+     * rxjs subject subscription to selection events.
      */
     private elementSelectionSubject = new Subject<ElementProperties>()
 
@@ -25,10 +26,13 @@ export class StitchCentralService {
      * A map of element id to the stitching properties of that element. This acts as the central control structure for
      * the stitching
      */
-    private elementProperties: {[key: string]: ElementProperties} = {}
+    private elementProperties: Map<string, ElementProperties> = new Map()
 
     constructor(private stitchService: StitchService,
-                private renderService: RenderService) {
+                private renderService: RenderService,
+                private settingsService: SettingsService) {
+
+        settingsService.renderSettings.subject.subscribe(this.onRenderSettingsChanged)
     }
 
     /**
@@ -41,14 +45,26 @@ export class StitchCentralService {
     }
 
     /**
+     * Render setting have updated to we need to re-render the stitches
+     */
+    readonly onRenderSettingsChanged = () => {
+        console.log('new settings', this.settingsService.renderSettings.strokeWidth)
+
+        this.elementProperties.forEach((element) => {
+            this.renderService.onRenderSettingsChanged(element)
+        })
+    }
+
+    /**
      * To be called when a new element is selected
      */
     elementSelected(element: Snap.Element) {
         const id = element.attr("id")
-        this.selectedElement = this.elementProperties[id]
-        if (this.selectedElement === undefined) {
+        if (this.elementProperties.has(id)) {
+            this.selectedElement = this.elementProperties.get(id)!
+        } else {
             this.selectedElement = new ElementProperties(element)
-            this.elementProperties[id] = this.selectedElement
+            this.elementProperties.set(id, this.selectedElement)
         }
 
         this.selectedElement.isSelected = true
@@ -60,10 +76,12 @@ export class StitchCentralService {
      */
     elementDeselected(element: Snap.Element) {
         const id = element.attr("id")
-        let props = this.elementProperties[id]
-        if (props === undefined) {
+        let props: ElementProperties
+        if (this.elementProperties.has(id)) {
+            props = this.elementProperties.get(id)!
+        } else {
             props = new ElementProperties(element)
-            this.elementProperties[id] = props
+            this.elementProperties.set(id, props)
         }
 
         props.isSelected = false

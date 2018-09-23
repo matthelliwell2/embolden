@@ -1,0 +1,10 @@
+<div class="container">
+    <div class="row">
+        <label class="col-2 pt-1">Width:</label>
+        <div class="col-10">
+            <ng5-slider [(value)]="settingsService.renderSettings.strokeWidth" [options]="options"
+                        [manualRefresh]="manualRefresh"
+                        (userChangeEnd)="onUserChangeEnd($event)"></ng5-slider>
+        </div>
+    </div>
+</div>

@@ -1,5 +1,7 @@
 import {Component, HostListener, OnInit, ViewChild} from '@angular/core'
 import {SvgService} from "../svg.service"
+import {NgbModal} from "@ng-bootstrap/ng-bootstrap"
+import {SettingsComponent} from "../settings/settings.component"
 
 @Component({
     selector: 'app-toolbar',
@@ -19,7 +21,8 @@ export class ToolbarComponent implements OnInit {
     // This is a reference to the hidden input type='file' component
     @ViewChild('file') file
 
-    constructor(public svgService: SvgService) {
+    constructor(public svgService: SvgService,
+                private modalService: NgbModal) {
     }
 
     ngOnInit() {
@@ -46,6 +49,11 @@ export class ToolbarComponent implements OnInit {
 
     onRestore() {
         this.svgService.restoreSizeAndPosition()
+    }
+
+    onSettings() {
+        const modalRef = this.modalService.open(SettingsComponent)
+        modalRef.componentInstance.name = 'World'
     }
 
 

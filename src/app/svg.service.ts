@@ -53,7 +53,7 @@ export class SvgService {
         const height = this.paper.attr('height')
 
         if (!width.endsWith('mm') || !height.endsWith('mm')) {
-            throw new Error(`Viewport units must be in mm ${width}x${height} is not supported`)
+            throw new Error(`Viewport uni ts must be in mm ${width}x${height} is not supported`)
         }
 
         const viewBox = this.paper.attr('viewBox')

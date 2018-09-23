@@ -1,0 +1,27 @@
+<div class="modal-header">
+    <h4 class="modal-title" id="modal-basic-title">Settings</h4>
+    <button type="button" class="close" aria-label="Close" (click)="activeModal.close()">
+        <span aria-hidden="true">&times;</span>
+    </button>
+</div>
+<div class="modal-body">
+    <ngb-tabset>
+        <ngb-tab title="Stitch Display">
+            <ng-template ngbTabContent>
+                <div class="box pt-3">
+                <app-render-settings></app-render-settings>
+                </div>
+            </ng-template>
+        </ngb-tab>
+        <ngb-tab title="Other stuff">
+            <ng-template ngbTabContent>
+                <div class="box">
+                    Other stuff
+                </div>
+            </ng-template>
+        </ngb-tab>
+    </ngb-tabset>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-outline-dark" (click)="activeModal.close()">Close</button>
+</div>
