@@ -2,7 +2,7 @@
     <div class="row mb-2">
         <label class="col-2 pt-2">Width:</label>
         <div class="col-10 border rounded-1">
-            <ng5-slider [(value)]="settingsService.renderSettings.strokeWidth" [options]="options"
+            <ng5-slider [(value)]="settingsService.renderSettings.renderValues.strokeWidth" [options]="options"
                         [manualRefresh]="manualRefresh"
                         (userChangeEnd)="onStrokeWidthChangeComplete()"></ng5-slider>
         </div>
@@ -10,7 +10,7 @@
     <div class="row">
         <label class="col-2 pt-2">Colour:</label>
         <div class="col-10 border rounded-1">
-            <color-chrome [color]="settingsService.renderSettings.color" (onChangeComplete)="onColourChangeComplete($event)" [disableAlpha]="true"></color-chrome>
+            <color-chrome [color]="settingsService.renderSettings.renderValues.colour" (onChangeComplete)="onColourChangeComplete($event)" [disableAlpha]="true"></color-chrome>
         </div>
     </div>
 </div>

@@ -6,7 +6,6 @@ import * as Rx from 'rxjs'
 })
 export class SettingsService {
 
-    // TODO save and restore settings between sessions
     constructor() {
     }
 
@@ -14,7 +13,26 @@ export class SettingsService {
 }
 
 export class RenderSettings {
-    subject = new Rx.Subject<void>()
+    constructor() {
+        const values = localStorage.getItem("renderSettings")
+        if (values !== null && values !== undefined) {
+            this.renderValues = JSON.parse(values) as RenderValues
+        }
+
+        this.subject.subscribe(this.onRenderSettingsChanged)
+
+    }
+
+    renderValues = new RenderValues()
+
+    readonly subject = new Rx.Subject<void>()
+
+    private readonly onRenderSettingsChanged = () => {
+        localStorage.setItem("renderSettings", JSON.stringify(this.renderValues))
+    }
+}
+
+class RenderValues {
     strokeWidth: number = 0.1
-    color = '#FFF'
+    colour = '#888'
 }

@@ -35,7 +35,7 @@ export class RenderSettingsComponent implements OnInit {
     }
 
     onColourChangeComplete(event: ColorEvent): void {
-        this.settingsService.renderSettings.color = event.color.hex
+        this.settingsService.renderSettings.renderValues.colour = event.color.hex
         this.settingsService.renderSettings.subject.next()
     }
 }

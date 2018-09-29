@@ -20,7 +20,7 @@ export class RenderService {
      */
     render(elementProperties: ElementProperties): void {
 
-        const width = this.svgService.mmToViewBoxLength(this.settingsService.renderSettings.strokeWidth)
+        const width = this.svgService.mmToViewBoxLength(this.settingsService.renderSettings.renderValues.strokeWidth)
 
         this.createStitchGroup(elementProperties, width)
         this.addStitchLinesToGroup(elementProperties)
@@ -80,7 +80,7 @@ export class RenderService {
 
             // Set the style on the group so that it is picked up by all the elements in the group so we only have to change it in one place.
             "stroke-width": `${width}px`,
-            stroke: this.settingsService.renderSettings.color
+            stroke: this.settingsService.renderSettings.renderValues.colour
         })
     }
 
@@ -101,12 +101,12 @@ export class RenderService {
      * Called when we need to change the way the element is rendered because the users has changed the settings.
      */
     onRenderSettingsChanged(elementProperties: ElementProperties) {
-        const width = this.svgService.mmToViewBoxLength(this.settingsService.renderSettings.strokeWidth)
+        const width = this.svgService.mmToViewBoxLength(this.settingsService.renderSettings.renderValues.strokeWidth)
 
         if (elementProperties.stitchGroup) {
             elementProperties.stitchGroup.attr({
                 "stroke-width": `${width}px`,
-                stroke: this.settingsService.renderSettings.color
+                stroke: this.settingsService.renderSettings.renderValues.colour
             })
         }
     }
