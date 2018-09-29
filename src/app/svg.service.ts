@@ -12,11 +12,13 @@ import * as uuid from "uuid/v4"
 })
 export class SvgService {
 
-    // Container in which the svg file is rendered.
+    /**
+     * html element that contains the svg file when it is loaded. This is initialised from the edit component
+     */
     container: Snap.Element
 
-    // SVG element inside the container
-    paper: Snap.Paper
+    // SVG element inside the container. This is set when a file is loaded. Therefore is this is null then no file has been loaded.
+    // paper: Snap.Paper
 
     // Initial transform matrix incase we need to reset things
     initialLocalMatrix: Snap.Matrix
@@ -32,31 +34,24 @@ export class SvgService {
     /**
      * Loads the specified file and does some initial processing on it.
      */
-    loadFile(fileContents: string): void {
+    loadFile(fileContents: string): Snap.Paper {
         if (this.container === undefined) {
             throw new Error("Container has not been set yet")
         }
 
-        // Remove whatever we've got in there already
-        // TODO add a save warning
-        this.paper = this.container.select("svg") as Snap.Paper
-        if (this.paper !== undefined && this.paper !== null) {
-            this.paper.remove()
-        }
+        const paper = this.loadFileIntoContainer(fileContents) as Snap.Paper
 
-        const fragment = SnapCjs.parse(fileContents)
-        this.container.append(fragment)
         this.addIdToAllElements(this.container)
+        this.adjustElementDisplay(this.container)
 
-        this.paper = this.container.select("svg") as Snap.Paper
-        const width = this.paper.attr('width')
-        const height = this.paper.attr('height')
+        const width = paper.attr('width')
+        const height = paper.attr('height')
 
         if (!width.endsWith('mm') || !height.endsWith('mm')) {
-            throw new Error(`Viewport uni ts must be in mm ${width}x${height} is not supported`)
+            throw new Error(`Viewport units must be in mm. ${width}x${height} is not supported`)
         }
 
-        const viewBox = this.paper.attr('viewBox')
+        const viewBox = paper.attr('viewBox')
         const scalingWidth = viewBox.width / Number(width.slice(0, width.length - 2))
         const scalingHeight = viewBox.height / Number(height.slice(0, height.length - 2))
 
@@ -66,13 +61,40 @@ export class SvgService {
 
         this.unzoomedViewportWidth = Number(width.slice(0, width.length - 2))
 
-        this.initialLocalMatrix = this.paper.transform().localMatrix
+        this.initialLocalMatrix = paper.transform().localMatrix
 
-        this.paper.drag()
+        paper.drag()
+
+        return paper
+    }
+
+    private loadFileIntoContainer(fileContents: string) {
+        // Remove whatever we've got in there already
+        let paper = this.getPaper()
+        if (paper !== undefined && paper !== null) {
+            paper.remove()
+        }
+
+        const fragment = SnapCjs.parse(fileContents) as Snap.Element
+        this.container.append(fragment)
+
+        paper = this.getPaper()
+        return paper
     }
 
     restoreSizeAndPosition() {
-        this.paper.transform(this.initialLocalMatrix.toTransformString())
+        const paper = this.getPaper()
+        if (paper !== undefined) {
+            paper.transform(this.initialLocalMatrix.toTransformString())
+        }
+    }
+
+    private getPaper(): Snap.Paper | undefined {
+        if (this.container !== undefined) {
+            return this.container.select("svg") as Snap.Paper
+        } else {
+            return undefined
+        }
     }
 
     /**
@@ -145,25 +167,20 @@ export class SvgService {
     }
 
     mmToViewBoxLength(mm: number): number {
-        const width = this.paper.attr('width')
+        const paper = this.getPaper()
+        if (paper !== undefined) {
+            const width = paper.attr('width')
 
-        const viewBox = this.paper.attr('viewBox')
+            const viewBox = paper.attr('viewBox')
 
-        const scalingWidth = viewBox.width / Number(width.slice(0, width.length - 2))
+            const scalingWidth = viewBox.width / Number(width.slice(0, width.length - 2))
 
-        const scaledValue = scalingWidth * mm * this.zoomScalingFactor()
+            const scaledValue = scalingWidth * mm * this.zoomScalingFactor(paper)
 
-        return scaledValue
-    }
-
-    private zoomScalingFactor(): number {
-        const viewportWidthMM = this.paper.attr('width')
-        const currentViewportWidth = Number(viewportWidthMM.slice(0, viewportWidthMM.length - 2))
-        return currentViewportWidth / this.unzoomedViewportWidth
-    }
-
-    private getViewBoxToElementMatrix(element: Snap.Element): Snap.Matrix {
-        return this.getElementToViewBoxMatrix(element).invert()
+            return scaledValue
+        } else {
+            return 1
+        }
     }
 
     /**
@@ -175,7 +192,7 @@ export class SvgService {
      * the containing div which doesn't affect the coords we are using.
      */
     private getElementToViewBoxMatrix(element: Snap.Element): Snap.Matrix {
-        const matrix = this.paper.transform().globalMatrix.invert()
+        const matrix = element.paper!.transform().globalMatrix.invert()
         matrix.add(element.transform().globalMatrix)
 
         return matrix
@@ -190,11 +207,20 @@ export class SvgService {
     }
 
     private zoom(factor: number) {
-        if (this.paper === undefined) {
-            return
+        const paper = this.getPaper()
+        if (paper !== undefined) {
+            paper.transform(paper.transform().localMatrix.scale(factor, factor).toTransformString())
         }
+    }
 
-        this.paper.transform(this.paper.transform().localMatrix.scale(factor, factor).toTransformString())
+    private zoomScalingFactor(paper: Snap.Paper): number {
+        const viewportWidthMM = paper.attr('width')
+        const currentViewportWidth = Number(viewportWidthMM.slice(0, viewportWidthMM.length - 2))
+        return currentViewportWidth / this.unzoomedViewportWidth
+    }
+
+    private getViewBoxToElementMatrix(element: Snap.Element): Snap.Matrix {
+        return this.getElementToViewBoxMatrix(element).invert()
     }
 
     /**
@@ -206,6 +232,25 @@ export class SvgService {
         }
 
         fragment.children().forEach(this.addIdToAllElements)
+    }
+
+    /**
+     * Make fill transparent so it doesn't hide the stitches.
+     * Makes sure we've got a stroke defined so that when we remove the fill we can still see the shape.
+     */
+    private adjustElementDisplay = (fragment: Snap.Element) => {
+        // TODO support more than paths
+        if (fragment.type === 'path') {
+            const fill = fragment.attr('fill')
+            fragment.attr({
+                "vector-effect": "non-scaling-stroke",
+                "stroke-width": 1,
+                "fill-opacity": 0,
+                stroke: fill === undefined ? "#000" : fill
+            })
+        }
+
+        fragment.children().forEach(this.adjustElementDisplay)
     }
 }
 

@@ -18,7 +18,7 @@ export class StitchControlComponent implements OnInit {
     }
 
     ngOnInit() {
-        this.subscription = this.stitchCentralService.subscribe(this.onElementSelected, this.onElementDeselected)
+        this.subscription = this.stitchCentralService.subscribeToSelectionEvents(this.onElementSelected, this.onElementDeselected)
         this.selectedElement = this.stitchCentralService.selectedElement
     }
 

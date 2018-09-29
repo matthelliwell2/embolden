@@ -10,7 +10,11 @@ export class ElementProperties {
     stitches: Coord[] = []
     fillType: SatinFillType = SatinFillType.None
     isSelected: boolean = false
-    group: Snap.Element | undefined = undefined
+
+    /**
+     * The svg group that contains the lines etc for the display of the stitches.
+     */
+    stitchGroup: Snap.Element | undefined = undefined
 }
 
 /**

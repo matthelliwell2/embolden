@@ -2,6 +2,7 @@ import {Component, HostListener, OnInit, ViewChild} from '@angular/core'
 import {SvgService} from "../svg.service"
 import {NgbModal} from "@ng-bootstrap/ng-bootstrap"
 import {SettingsComponent} from "../settings/settings.component"
+import {StitchCentralService} from "../stitch-central.service"
 
 @Component({
     selector: 'app-toolbar',
@@ -22,6 +23,7 @@ export class ToolbarComponent implements OnInit {
     @ViewChild('file') file
 
     constructor(public svgService: SvgService,
+                public stitchCentralService: StitchCentralService,
                 private modalService: NgbModal) {
     }
 
@@ -41,7 +43,7 @@ export class ToolbarComponent implements OnInit {
     onFilesAdded() {
         const r = new FileReader()
         r.onload = (file) => {
-            this.svgService.loadFile(file.target!.result)
+            this.stitchCentralService.loadFile(file.target!.result)
         }
 
         r.readAsText(this.file.nativeElement.files[0])

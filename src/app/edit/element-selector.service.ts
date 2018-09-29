@@ -23,6 +23,15 @@ export class ElementSelectorService {
         } else {
             this.unselect()
 
+            const elementFor = element.attr("elementFor")
+            if (elementFor !== undefined && elementFor !== null) {
+                // We've selected one of the stitches rather than the shape from the drawing
+                const elementProperties = this.stitchCentralService.elementProperties.get(elementFor)
+                if (elementProperties !== undefined) {
+                    element = elementProperties.element
+                }
+            }
+
             this.selectedElement = element
             this.selectedElement.addClass("selected-element")
 

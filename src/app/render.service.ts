@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core'
-import {SvgService} from "./svg.service"
+import {Coord, SvgService} from "./svg.service"
 import {ElementProperties} from "./models"
 import {SettingsService} from "./settings.service"
 
@@ -18,40 +18,95 @@ export class RenderService {
     /**
      * Draws the stitches for an element.
      */
-    render(element: ElementProperties): void {
-        const paper = element.element.paper!
-        if (element.group !== undefined) {
-            element.group.remove()
-        }
+    render(elementProperties: ElementProperties): void {
 
-        element.group = paper.g()
+        const width = this.svgService.mmToViewBoxLength(this.settingsService.renderSettings.strokeWidth)
 
-        // Store the id of the element in the group so we can map back to the element later on
-        const id = element.element.attr("id")
-        element.group.attr({
-            elementFor: id,
-            class: "render-group",
-            style: `stroke-width: ${this.settingsService.renderSettings.strokeWidth}px; stroke: #F0F;`
-        })
+        this.createStitchGroup(elementProperties, width)
+        this.addStitchLinesToGroup(elementProperties)
+        this.addStitchCirclesToGroup(elementProperties)
+    }
 
-        for (let i = 0; i < element.stitches.length - 1; ++i) {
-            const line = paper.line(element.stitches[i].x, element.stitches[i].y, element.stitches[i + 1].x, element.stitches[i + 1].y)
-            element.group!.add(line)
-        }
+    /**
+     * Adds the circles representing the penetration points to the group.
+     */
+    private addStitchCirclesToGroup(elementProperties: ElementProperties) {
+        const paper = elementProperties.element.paper!
+        const id = elementProperties.element.attr("id")
+        const radius = this.svgService.mmToViewBoxLength(0.15)
 
-        const radius = this.svgService.mmToViewBoxLength(0.2)
-        element.stitches.forEach(point => {
+        elementProperties.stitches.forEach(point => {
             const circle = paper.circle(point.x, point.y, radius)
-            circle.attr({stroke: "#00F", fill: "none", strokeWidth: "1", "vector-effect": "non-scaling-stroke"})
-            element.group!.add(circle)
+            circle.attr({
+                fill: "none",
+                elementFor: id,
+            })
+
+            elementProperties.stitchGroup!.add(circle)
         })
     }
 
-    onRenderSettingsChanged(element: ElementProperties) {
-        console.log("onRenderSettingsChanged", this.settingsService.renderSettings.strokeWidth)
-        if (element.group) {
-            element.group.attr({
-                style: `stroke-width: ${this.settingsService.renderSettings.strokeWidth}px; stroke: #F0F;`
+    /**
+     * Adds the lines representing the path of the stitching to the group.
+     */
+    private addStitchLinesToGroup(elementProperties: ElementProperties): void {
+        const path = this.stitchesToPath(elementProperties.stitches)
+
+        const paper = elementProperties.element.paper!
+        const pathElement = paper.path(path)
+        pathElement.attr({
+            fill: "none",
+            elementFor: elementProperties.element.attr("id")
+        })
+        elementProperties.stitchGroup!.add(pathElement)
+    }
+
+    /**
+     * Create an SVG group to hold the lines and circles used to render the stitches
+     */
+    private createStitchGroup(elementProperties: ElementProperties, width): void {
+        const paper = elementProperties.element.paper!
+        if (elementProperties.stitchGroup !== undefined) {
+            elementProperties.stitchGroup.remove()
+        }
+
+        elementProperties.stitchGroup = paper.g()
+
+        const id = elementProperties.element.attr("id")
+
+        elementProperties.stitchGroup.attr({
+            // Store the id of the element in the group so we can map back to the element later on
+            elementFor: id,
+
+            // Set the style on the group so that it is picked up by all the elements in the group so we only have to change it in one place.
+            "stroke-width": `${width}px`,
+            stroke: this.settingsService.renderSettings.color
+        })
+    }
+
+    /**
+     * Converts the stitch coords into an SVG path
+     */
+    private stitchesToPath(stitches: Coord[]): string {
+        const parts: string[] = []
+        parts.push(`M${stitches[0].x},${stitches[0].y} `)
+        for (let i = 1; i < stitches.length; ++i) {
+            parts.push(`L${stitches[i].x},${stitches[i].y} `)
+        }
+
+        return "".concat(... parts)
+    }
+
+    /**
+     * Called when we need to change the way the element is rendered because the users has changed the settings.
+     */
+    onRenderSettingsChanged(elementProperties: ElementProperties) {
+        const width = this.svgService.mmToViewBoxLength(this.settingsService.renderSettings.strokeWidth)
+
+        if (elementProperties.stitchGroup) {
+            elementProperties.stitchGroup.attr({
+                "stroke-width": `${width}px`,
+                stroke: this.settingsService.renderSettings.color
             })
         }
     }

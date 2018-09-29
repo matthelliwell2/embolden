@@ -15,5 +15,6 @@ export class SettingsService {
 
 export class RenderSettings {
     subject = new Rx.Subject<void>()
-    strokeWidth: number = 1
+    strokeWidth: number = 0.1
+    color = '#FFF'
 }

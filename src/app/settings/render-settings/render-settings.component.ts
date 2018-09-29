@@ -1,6 +1,7 @@
 import {Component, EventEmitter, OnInit} from '@angular/core'
 import {SettingsService} from "../../settings.service"
 import {Options} from 'ng5-slider'
+import {ColorEvent} from "ngx-color"
 
 @Component({
     selector: 'app-render-settings',
@@ -10,13 +11,15 @@ import {Options} from 'ng5-slider'
 export class RenderSettingsComponent implements OnInit {
 
     manualRefresh: EventEmitter<void> = new EventEmitter<void>()
+
     constructor(public settingsService: SettingsService) {
     }
 
     options: Options = {
         floor: 0,
-        ceil: 10,
-        step: 0.1
+        ceil: 1,
+        step: 0.01,
+        precision: 2
     }
 
     ngOnInit() {
@@ -27,7 +30,12 @@ export class RenderSettingsComponent implements OnInit {
         this.manualRefresh.emit()
     }
 
-    onUserChangeEnd(): void {
+    onStrokeWidthChangeComplete(): void {
+        this.settingsService.renderSettings.subject.next()
+    }
+
+    onColourChangeComplete(event: ColorEvent): void {
+        this.settingsService.renderSettings.color = event.color.hex
         this.settingsService.renderSettings.subject.next()
     }
 }

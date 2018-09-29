@@ -1,4 +1,4 @@
-<nav class="navbar navbar-expand-lg navbar-light bg-light ui-draggable border border-info" draggable="true" [style.top.px]="topPos" [style.left.px]="leftPos">
+<nav class="navbar navbar-expand-lg navbar-light bg-light ui-draggable border border-info rounded-1" draggable="true" [style.top.px]="topPos" [style.left.px]="leftPos">
     <div class="navbar-brand">
         <fa-icon icon="bold"></fa-icon>
     </div>
@@ -18,7 +18,7 @@
                 <input type="file" #file (change)="onFilesAdded()" style="display: none" accept=".svg, .txt"/>
             </li>
             <li class="nav-item active mr-3">
-                <button class="btn" placement="right" ngbTooltip="Restore" (click)="onRestore()" [disabled]="svgService.paper === undefined">
+                <button class="btn" placement="right" ngbTooltip="Restore" (click)="onRestore()" [disabled]="!stitchCentralService.isFileLoaded">
                     Restore
                     <fa-icon icon="window-restore"></fa-icon>
                 </button>

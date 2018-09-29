@@ -8,3 +8,7 @@
 .modal-content {
     width: 150%;
 }
+
+.rounded-1 {
+    border-radius: 1rem !important;
+}

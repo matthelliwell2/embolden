@@ -56,25 +56,6 @@ export class StitchService {
                     allStitches = allStitches.concat(stitches)
                 }
 
-/*                const nextLine = lines[i + 1]
-                if (nextLine !== undefined) {
-                    // We've got another line to do after this one so make sure we stitch between them. If they are widely
-                    // separated horizontally then we'll need to add some stitches between them
-                    let joiningStitches: Coord[]
-                    if (forwards) {
-                        joiningStitches = this.generateStitchesBetweenPoints(line.end, nextLine.end, true, stitchLength, minStitchLength)
-                    } else {
-                        joiningStitches = this.generateStitchesBetweenPoints(line.start, nextLine.start, true, stitchLength, minStitchLength)
-                    }
-
-                    // We don't need to include the first and last stitches as these are the ends of the scan lines so will
-                    // already have stitches defined for them
-                    joiningStitches = joiningStitches.slice(1, joiningStitches.length - 1)
-                    if (joiningStitches !== undefined) {
-                        allStitches.push(... joiningStitches)
-                    }
-                }*/
-
                 forwards = !forwards
             })
         })
@@ -128,36 +109,4 @@ export class StitchService {
         const y = a.y - b.y
         return Math.sqrt(x * x + y * y)
     }
-
-/*    private generateStitchPointsForLine(line: Line, forwards: boolean, stitchLength: number, minStitchLength: number): Coord[] {
-        const results: Coord[] = []
-
-        const y = line.start.y
-
-        if (line.end.x - line.start.x < stitchLength) {
-            // There's not enough space for a standard width stitch so reduce the stitch length. This makes sure that
-            // narrow sections like points get filled in
-            if (line.end.x - line.start.x >= minStitchLength) {
-                if (forwards) {
-                    results.push({x: line.start.x, y: line.start.y})
-                    results.push({x: line.end.x, y: line.end.y})
-                } else {
-                    results.push({x: line.end.x, y: line.end.y})
-                    results.push({x: line.start.x, y: line.start.y})
-                }
-            }
-        } else {
-            if (forwards) {
-                for (let x = line.start.x; x <= line.end.x; x += stitchLength) {
-                    results.push({x: x, y: y})
-                }
-            } else {
-                for (let x = line.end.x; x >= line.start.x; x -= stitchLength) {
-                    results.push({x: x, y: y})
-                }
-            }
-        }
-
-        return results
-    }*/
 }

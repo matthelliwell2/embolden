@@ -13,6 +13,7 @@ import {StitchControlComponent} from './stitch-control/stitch-control.component'
 import {SettingsComponent} from './settings/settings.component'
 import {RenderSettingsComponent} from './settings/render-settings/render-settings.component'
 import {Ng5SliderModule} from 'ng5-slider'
+import {ColorChromeModule} from 'ngx-color/chrome' // <color-chrome></color-chrome>
 
 library.add(faFolderOpen, faBold, faWindowRestore, faSlidersH)
 
@@ -31,7 +32,8 @@ library.add(faFolderOpen, faBold, faWindowRestore, faSlidersH)
         NgbModule,
         FontAwesomeModule,
         FormsModule,
-        Ng5SliderModule
+        Ng5SliderModule,
+        ColorChromeModule
     ],
     providers: [],
     bootstrap: [AppComponent],
