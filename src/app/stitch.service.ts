@@ -27,9 +27,12 @@ export class StitchService {
             return []
         }
 
+        // TODO support more than paths
         if (element.type !== 'path') {
             throw new Error(`Elements of type ${element.type} are not supported`)
         }
+
+        this.closePath(element)
 
         const bbox = element.getBBox()
         const scanLines = this.scanLineService.generateScanLines({x: bbox.x, y: bbox.y}, StitchService.ROW_HEIGHT, element, bbox)
@@ -48,8 +51,6 @@ export class StitchService {
         const minStitchLength = this.svgService.mmToViewBoxLength(StitchService.MIN_STITCH_LENGTH)
         scanLines.forEach(columnOfLines => {
             columnOfLines.forEach((line, i, lines) => {
-                // const stitches = this.generateStitchPointsForLine(line, forwards, stitchLength, minStitchLength)
-
                 // Generate stitches along the scan line
                 const stitches = this.generateStitchesBetweenPoints(line.start, line.end, forwards, stitchLength, minStitchLength)
                 if (stitches.length > 0) {
@@ -61,6 +62,16 @@ export class StitchService {
         })
 
         return allStitches
+    }
+
+    /**
+     * Make's sure that the path is closed otherwise it can't be filled properly
+     */
+    private closePath(element: Snap.Element) {
+        const path = element.attr("d").trim()
+        if (!path.endsWith("Z")  && !path.endsWith("z")) {
+            element.attr(({d: path + "Z"}))
+        }
     }
 
     /**

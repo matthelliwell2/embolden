@@ -128,8 +128,8 @@ export class ScanLinesService {
      */
     private getIntersections(scanLine: Line, separation: number, elementPath: string): Array<IntersectionDot> {
         const originalY = scanLine.start.y
-        // const dy = -separation * 0.02
-        const dy = -separation * 1.234
+        const dy = -separation * 0.02
+        // const dy = -separation * 1.234
         let intersections: IntersectionDot[]
 
         do {

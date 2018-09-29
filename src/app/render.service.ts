@@ -1,6 +1,6 @@
 import {Injectable} from '@angular/core'
 import {Coord, SvgService} from "./svg.service"
-import {ElementProperties} from "./models"
+import {ElementProperties, SatinFillType} from "./models"
 import {SettingsService} from "./settings.service"
 
 /**
@@ -23,8 +23,11 @@ export class RenderService {
         const width = this.svgService.mmToViewBoxLength(this.settingsService.renderSettings.renderValues.strokeWidth)
 
         this.createStitchGroup(elementProperties, width)
-        this.addStitchLinesToGroup(elementProperties)
-        this.addStitchCirclesToGroup(elementProperties)
+
+        if (elementProperties.fillType !== SatinFillType.None) {
+            this.addStitchLinesToGroup(elementProperties)
+            this.addStitchCirclesToGroup(elementProperties)
+        }
     }
 
     /**

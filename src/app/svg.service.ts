@@ -238,11 +238,11 @@ export class SvgService {
      * Make fill transparent so it doesn't hide the stitches.
      * Makes sure we've got a stroke defined so that when we remove the fill we can still see the shape.
      */
-    private adjustElementDisplay = (fragment: Snap.Element) => {
+    private adjustElementDisplay = (element: Snap.Element) => {
         // TODO support more than paths
-        if (fragment.type === 'path') {
-            const fill = fragment.attr('fill')
-            fragment.attr({
+        if (element.type === 'path') {
+            const fill = element.attr('fill')
+            element.attr({
                 "vector-effect": "non-scaling-stroke",
                 "stroke-width": 1,
                 "fill-opacity": 0,
@@ -250,7 +250,7 @@ export class SvgService {
             })
         }
 
-        fragment.children().forEach(this.adjustElementDisplay)
+        element.children().forEach(this.adjustElementDisplay)
     }
 }
 
