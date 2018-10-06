@@ -1,5 +1,5 @@
 import {Component, HostListener, OnInit, ViewChild} from '@angular/core'
-import {SvgService} from "../svg.service"
+import {SvgService} from "../svg.service/svg.service"
 import {NgbModal} from "@ng-bootstrap/ng-bootstrap"
 import {SettingsComponent} from "../settings/settings.component"
 import {StitchCentralService} from "../stitch-central.service"

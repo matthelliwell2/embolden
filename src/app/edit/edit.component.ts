@@ -1,7 +1,7 @@
 import {Component, HostListener, OnInit} from '@angular/core'
 import * as SnapCjs from 'snapsvg-cjs'
 import * as Snap from 'snapsvg'
-import {SvgService} from "../svg.service"
+import {SvgService} from "../svg.service/svg.service"
 import {ElementSelectorService} from "./element-selector.service"
 
 /**

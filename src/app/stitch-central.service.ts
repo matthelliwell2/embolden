@@ -5,7 +5,7 @@ import {StitchService} from "./stitch.service"
 import {RenderService} from "./render.service"
 import {ElementProperties} from "./models"
 import {SettingsService} from "./settings.service"
-import {SvgService} from "./svg.service"
+import {SvgService} from "./svg.service/svg.service"
 
 /**
  * This service coordinates actions between the various parts of the system and keeps track of the state of the system

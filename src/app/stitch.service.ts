@@ -1,8 +1,9 @@
 import * as Snap from 'snapsvg'
 import {Injectable} from '@angular/core'
-import {Coord, Line, SvgService} from "./svg.service"
+import {SvgService} from "./svg.service/svg.service"
 import {ScanLinesService} from "./scan-lines.service"
 import {SatinFillType} from "./models"
+import {Coord, Line} from "./svg.service/models"
 
 /**
  * This class generates stitches for elements acccording to the specified style, fill type etc. It just returns
@@ -35,33 +36,94 @@ export class StitchService {
         this.closePath(element)
 
         const bbox = element.getBBox()
-        const scanLines = this.scanLineService.generateScanLines({x: bbox.x, y: bbox.y}, StitchService.ROW_HEIGHT, element, bbox)
+        const scanLines = this.scanLineService.generateScanLines({
+            x: bbox.x,
+            y: bbox.y
+        }, StitchService.ROW_HEIGHT, element, bbox)
 
-        const stitchPoints = this.generateAllStitchPoints(scanLines)
+        const stitches = this.generateStitches(element, scanLines)
 
-        console.log("Num stitches =", stitchPoints.length)
-        return stitchPoints
+        console.log("Num stitches =", stitches.length)
+        return stitches
     }
 
-    // TODO sew along edge between columns
-    private generateAllStitchPoints(scanLines: Line[][]): Coord[] {
+    private generateStitches(element: Snap.Element, scanLines: Line[][]): Coord[] {
         let allStitches: Coord[] = []
-        let forwards = true
         const stitchLength = this.svgService.mmToViewBoxLength(StitchService.STITCH_LENGTH)
         const minStitchLength = this.svgService.mmToViewBoxLength(StitchService.MIN_STITCH_LENGTH)
-        scanLines.forEach(columnOfLines => {
-            columnOfLines.forEach((line, i, lines) => {
-                // Generate stitches along the scan line
-                const stitches = this.generateStitchesBetweenPoints(line.start, line.end, forwards, stitchLength, minStitchLength)
-                if (stitches.length > 0) {
-                    allStitches = allStitches.concat(stitches)
-                }
 
-                forwards = !forwards
-            })
+        let previousColumnStitches: Coord[] | undefined = undefined
+        scanLines.forEach(columnOfLines => {
+
+            let columnStitches: Coord[] = []
+            columnStitches = this.generateStitchesForColumn(columnOfLines, stitchLength, minStitchLength, columnStitches)
+
+            // Generate stitches from the end of the last column to the start of this column
+            if (previousColumnStitches !== undefined && previousColumnStitches!.length > 0  && columnStitches.length > 0) {
+                const joinStitches = this.generateStitchesAlongPath(element, previousColumnStitches[previousColumnStitches!.length - 1], columnStitches[0], stitchLength, minStitchLength)
+                if (joinStitches.length > 0) {
+                    console.log("join stitches:", joinStitches.length)
+                    allStitches = allStitches.concat(joinStitches)
+                }
+            }
+
+            if (columnStitches.length > 0) {
+                previousColumnStitches = columnStitches
+            }
+
+            allStitches = allStitches.concat(columnStitches)
         })
 
         return allStitches
+    }
+
+    /**
+     * Generates stitches for a single column of scan lines.
+     */
+    private generateStitchesForColumn(columnOfLines: Line[], stitchLength: number, minStitchLength: number, columnStitches: Coord[]) {
+        let forwards = true
+        columnOfLines.forEach((line) => {
+            // Generate stitches along the scan line
+            const stitches = this.generateStitchesBetweenPoints(line.start, line.end, forwards, stitchLength, minStitchLength)
+
+            if (stitches.length > 0) {
+                columnStitches = columnStitches.concat(stitches)
+            }
+
+            forwards = !forwards
+        })
+
+        return columnStitches
+    }
+
+    /**
+     * Generates stitches along the edge of the element between the two coorinates. If the points are close enough together not to need intermediate stitches then it returns an
+     * empty array.
+     */
+    private generateStitchesAlongPath(element: Snap.Element, from: Coord, to: Coord, stitchLength: number, minStitchLength: number): Coord[] {
+        /*
+        const fromDistance = SnapCjs.closestPoint(element, from.x, from.y).length
+        const toDistance = SnapCjs.closestPoint(element, to.x, to.y).length
+
+        // TODO Work out which way around the path is the shortest distance
+        const distance = Math.abs(toDistance - fromDistance)
+        const numStitches = Math.round(distance / stitchLength)
+        const actualStitchLength = distance / numStitches
+
+        const path = SnapCjs.path as Snap.Path
+        const pathStr = element.attr("d")
+        const stitches: Coord[] = []
+        for (let i = 0; i < numStitches; ++i) {
+            const stitch = path.getPointAtLength(pathStr, fromDistance + i * actualStitchLength) as Coord
+            stitches.push({x: stitch.x, y: stitch.y})
+        }
+
+        // Remove the first and last stitches as they are already included in the start and end points passed in
+        return stitches.slice(1, stitches.length - 1)*/
+
+        this.svgService.distanceAlongPath(element, from)
+
+        return []
     }
 
     /**
@@ -69,7 +131,7 @@ export class StitchService {
      */
     private closePath(element: Snap.Element) {
         const path = element.attr("d").trim()
-        if (!path.endsWith("Z")  && !path.endsWith("z")) {
+        if (!path.endsWith("Z") && !path.endsWith("z")) {
             element.attr(({d: path + "Z"}))
         }
     }
@@ -100,8 +162,8 @@ export class StitchService {
                 results.push(end)
             }
         } else {
-            const xlength = (end.x - start.x)/numStitches
-            const ylength = (end.y - start.y)/numStitches
+            const xlength = (end.x - start.x) / numStitches
+            const ylength = (end.y - start.y) / numStitches
 
             // We add 1 to the number of stitches as we need a stitch at the end point
             for (let i = 0; i <= numStitches; ++i) {

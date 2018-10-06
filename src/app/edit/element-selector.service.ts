@@ -1,6 +1,6 @@
 import {Injectable} from '@angular/core'
 import * as Snap from "snapsvg"
-import {SvgService} from "../svg.service"
+import {SvgService} from "../svg.service/svg.service"
 import {StitchCentralService} from "../stitch-central.service"
 
 @Injectable({

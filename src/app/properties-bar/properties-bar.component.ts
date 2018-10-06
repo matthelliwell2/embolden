@@ -22,7 +22,6 @@ export class PropertiesBarComponent implements OnInit {
         // for its height. We do this in the setTimeout to avoid ExpressionChangedAfterItHasBeenCheckedError
         setTimeout(() => {
             this.tabTitleHeight = this.tabTitle.nativeElement.querySelector('ul').getBoundingClientRect().height
-            console.log(this.tabTitleHeight)
         })
     }
 }

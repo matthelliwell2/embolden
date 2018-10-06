@@ -2,7 +2,8 @@ import * as SnapCjs from 'snapsvg-cjs'
 import {Injectable} from '@angular/core'
 import * as Snap from "snapsvg"
 import {IntersectionDot} from "snapsvg"
-import {Coord, Line, SvgService} from "./svg.service"
+import {SvgService} from "./svg.service/svg.service"
+import {Coord, Line} from "./svg.service/models"
 
 /**
  * This class is responsible for generate scan lines across an arbitrary shape. Internally it works with element

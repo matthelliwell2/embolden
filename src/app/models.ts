@@ -1,5 +1,5 @@
 import * as Snap from "snapsvg"
-import {Coord} from "./svg.service"
+import {Coord} from "./svg.service/models"
 
 /**
  *  The properties for an element that we use to control how it is stitched

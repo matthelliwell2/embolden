@@ -1,7 +1,8 @@
 import {Injectable} from '@angular/core'
-import {Coord, SvgService} from "./svg.service"
+import {SvgService} from "./svg.service/svg.service"
 import {ElementProperties, SatinFillType} from "./models"
 import {SettingsService} from "./settings.service"
+import {Coord} from "./svg.service/models"
 
 /**
  * This is responsible for rendering an image of the stitches onto the screen
@@ -32,6 +33,7 @@ export class RenderService {
 
     /**
      * Adds the circles representing the penetration points to the group.
+     * TODO use markers for this
      */
     private addStitchCirclesToGroup(elementProperties: ElementProperties) {
         const paper = elementProperties.element.paper!
