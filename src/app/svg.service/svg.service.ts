@@ -1,6 +1,6 @@
 import {Injectable} from '@angular/core'
 import * as Snap from 'snapsvg'
-import {Coord, Line, Rectangle} from "./models"
+import {Coord, Rectangle, ScanLine} from "./models"
 import {loadFile} from "./fileHandler"
 import {getPaper} from "./util"
 import * as Coords from "./coords"
@@ -74,7 +74,7 @@ export class SvgService {
      * Given lines that are in the element coordinate space this converts them to the user/viewbox coordinate space.
      * the lines are updated with the new coords. Returned array is the same as the array that was passed in.
      */
-    elementToViewBoxCoords(element: Snap.Element, lines: Line[][]): Line[][] {
+    elementToViewBoxCoords(element: Snap.Element, lines: ScanLine[][]): ScanLine[][] {
         return Coords.elementToViewBoxCoords(element, lines)
     }
 

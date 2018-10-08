@@ -3,7 +3,7 @@ import {Injectable} from '@angular/core'
 import {SvgService} from "./svg.service/svg.service"
 import {ScanLinesService} from "./scan-lines.service"
 import {SatinFillType} from "./models"
-import {Coord, Line} from "./svg.service/models"
+import {Coord, ScanLine} from "./svg.service/models"
 
 /**
  * This class generates stitches for elements acccording to the specified style, fill type etc. It just returns
@@ -28,7 +28,7 @@ export class StitchService {
             return []
         }
 
-        // TODO support more than paths
+        // TODO support more than paths?
         if (element.type !== 'path') {
             throw new Error(`Elements of type ${element.type} are not supported`)
         }
@@ -36,10 +36,7 @@ export class StitchService {
         this.closePath(element)
 
         const bbox = element.getBBox()
-        const scanLines = this.scanLineService.generateScanLines({
-            x: bbox.x,
-            y: bbox.y
-        }, StitchService.ROW_HEIGHT, element, bbox)
+        const scanLines = this.scanLineService.generateScanLines(StitchService.ROW_HEIGHT, element, bbox)
 
         const stitches = this.generateStitches(element, scanLines)
 
@@ -47,7 +44,7 @@ export class StitchService {
         return stitches
     }
 
-    private generateStitches(element: Snap.Element, scanLines: Line[][]): Coord[] {
+    private generateStitches(element: Snap.Element, scanLines: ScanLine[][]): Coord[] {
         let allStitches: Coord[] = []
         const stitchLength = this.svgService.mmToViewBoxLength(StitchService.STITCH_LENGTH)
         const minStitchLength = this.svgService.mmToViewBoxLength(StitchService.MIN_STITCH_LENGTH)
@@ -80,11 +77,11 @@ export class StitchService {
     /**
      * Generates stitches for a single column of scan lines.
      */
-    private generateStitchesForColumn(columnOfLines: Line[], stitchLength: number, minStitchLength: number, columnStitches: Coord[]) {
+    private generateStitchesForColumn(columnOfLines: ScanLine[], stitchLength: number, minStitchLength: number, columnStitches: Coord[]) {
         let forwards = true
         columnOfLines.forEach((line) => {
             // Generate stitches along the scan line
-            const stitches = this.generateStitchesBetweenPoints(line.start, line.end, forwards, stitchLength, minStitchLength)
+            const stitches = this.generateStitchesBetweenPoints(line.start.point, line.end.point, forwards, stitchLength, minStitchLength)
 
             if (stitches.length > 0) {
                 columnStitches = columnStitches.concat(stitches)

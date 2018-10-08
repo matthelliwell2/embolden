@@ -1,6 +1,6 @@
 import * as Snap from "snapsvg"
 import * as SnapCjs from 'snapsvg-cjs'
-import {Coord, Line, Rectangle} from "./models"
+import {Coord, Rectangle, ScanLine} from "./models"
 import {getPaper} from "./util"
 
 /**
@@ -21,15 +21,15 @@ export const elementPathToElementCoords = (element: Snap.Element): string => {
  * Given lines that are in the element coordinate space this converts them to the user/viewbox coordinate space.
  * the lines are updated with the new coords. Returned array is the same as the array that was passed in.
  */
-export const elementToViewBoxCoords = (element: Snap.Element, lines: Line[][]): Line[][] => {
+export const elementToViewBoxCoords = (element: Snap.Element, lines: ScanLine[][]): ScanLine[][] => {
     // The lines are already in element coords so have had the local matrix applied. To get back to viewbox coords
     // we need to know all transforms applied to the element.
     const matrix = getElementToViewBoxMatrix(element)
 
     lines.forEach(row => {
         return row.forEach(line => {
-            line.start = {x: matrix.x(line.start.x, line.start.y), y: matrix.y(line.start.x, line.start.y)}
-            line.end = {x: matrix.x(line.end.x, line.end.y), y: matrix.y(line.end.x, line.end.y)}
+            line.start.point = {x: matrix.x(line.start.point.x, line.start.point.y), y: matrix.y(line.start.point.x, line.start.point.y)}
+            line.end.point = {x: matrix.x(line.end.point.x, line.end.point.y), y: matrix.y(line.end.point.x, line.end.point.y)}
         })
     })
 
