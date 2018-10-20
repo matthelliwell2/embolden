@@ -3,6 +3,8 @@ import * as SnapCjs from 'snapsvg-cjs'
 import {Coord, Rectangle, ScanLine} from "./models"
 import {getPaper} from "./util"
 
+const Path = SnapCjs.path as Snap.Path
+
 /**
  * Converts the 'd' attribute on the element to the user coord space
  *
@@ -10,10 +12,14 @@ import {getPaper} from "./util"
  * element so to get the actual path we need to apply these transforms to the path on the attribute.
  */
 export const elementPathToElementCoords = (element: Snap.Element): string => {
-    const path = SnapCjs.path as Snap.Path
     const localMatrix = element.transform().localMatrix
 
-    return path.map(element.attr("d"), localMatrix)
+    return Path.map(element.attr("d"), localMatrix)
+}
+
+export const elementPathToViewBoxCoords = (element: Snap.Element): string => {
+    const matrix = getElementToViewBoxMatrix(element)
+    return Path.map(element.attr("d"), matrix)
 }
 
 
@@ -21,7 +27,7 @@ export const elementPathToElementCoords = (element: Snap.Element): string => {
  * Given lines that are in the element coordinate space this converts them to the user/viewbox coordinate space.
  * the lines are updated with the new coords. Returned array is the same as the array that was passed in.
  */
-export const elementToViewBoxCoords = (element: Snap.Element, lines: ScanLine[][]): ScanLine[][] => {
+export const scanLinesToViewBoxCoords = (element: Snap.Element, lines: ScanLine[][]): ScanLine[][] => {
     // The lines are already in element coords so have had the local matrix applied. To get back to viewbox coords
     // we need to know all transforms applied to the element.
     const matrix = getElementToViewBoxMatrix(element)
@@ -104,11 +110,9 @@ const getViewBoxToElementMatrix = (element: Snap.Element): Snap.Matrix => {
 }
 
 /**
- * Converts from element coords to viewbox coords. If there is no scaling applied this should return just a simple
- * 1:1 scaling factor.
+ * Converts from element coords to viewbox coords. If there is no scaling applied this should return just a simple 1:1 scaling factor.
  *
- * To do this we get the global transform applied to the element and
- * then subtract the global transform applied to the paper itself, eg the paper may have been scaled to fit inside
+ * To do this we get the global transform applied to the element and then subtract the global transform applied to the paper itself, eg the paper may have been scaled to fit inside
  * the containing div which doesn't affect the coords we are using.
  */
 const getElementToViewBoxMatrix = (element: Snap.Element): Snap.Matrix => {

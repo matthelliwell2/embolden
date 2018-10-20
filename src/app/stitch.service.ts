@@ -1,9 +1,12 @@
+import * as SnapCjs from 'snapsvg-cjs'
 import * as Snap from 'snapsvg'
 import {Injectable} from '@angular/core'
 import {SvgService} from "./svg.service/svg.service"
 import {ScanLinesService} from "./scan-lines.service"
 import {SatinFillType} from "./models"
 import {Coord, ScanLine} from "./svg.service/models"
+
+const Path = SnapCjs.path as Snap.Path
 
 /**
  * This class generates stitches for elements acccording to the specified style, fill type etc. It just returns
@@ -35,8 +38,7 @@ export class StitchService {
 
         this.closePath(element)
 
-        const bbox = element.getBBox()
-        const scanLines = this.scanLineService.generateScanLines(StitchService.ROW_HEIGHT, element, bbox)
+        const scanLines = this.scanLineService.generateScanLines(StitchService.ROW_HEIGHT, element)
 
         const stitches = this.generateStitches(element, scanLines)
 
@@ -81,7 +83,7 @@ export class StitchService {
         let forwards = true
         columnOfLines.forEach((line) => {
             // Generate stitches along the scan line
-            const stitches = this.generateStitchesBetweenPoints(line.start.point, line.end.point, forwards, stitchLength, minStitchLength)
+            const stitches = this.generateStitchesBetweenPoints(line, forwards, stitchLength, minStitchLength)
 
             if (stitches.length > 0) {
                 columnStitches = columnStitches.concat(stitches)
@@ -98,27 +100,6 @@ export class StitchService {
      * empty array.
      */
     private generateStitchesAlongPath(element: Snap.Element, from: Coord, to: Coord, stitchLength: number, minStitchLength: number): Coord[] {
-        /*
-        const fromDistance = SnapCjs.closestPoint(element, from.x, from.y).length
-        const toDistance = SnapCjs.closestPoint(element, to.x, to.y).length
-
-        // TODO Work out which way around the path is the shortest distance
-        const distance = Math.abs(toDistance - fromDistance)
-        const numStitches = Math.round(distance / stitchLength)
-        const actualStitchLength = distance / numStitches
-
-        const path = SnapCjs.path as Snap.Path
-        const pathStr = element.attr("d")
-        const stitches: Coord[] = []
-        for (let i = 0; i < numStitches; ++i) {
-            const stitch = path.getPointAtLength(pathStr, fromDistance + i * actualStitchLength) as Coord
-            stitches.push({x: stitch.x, y: stitch.y})
-        }
-
-        // Remove the first and last stitches as they are already included in the start and end points passed in
-        return stitches.slice(1, stitches.length - 1)*/
-
-        this.svgService.distanceAlongPath(element, from)
 
         return []
     }
@@ -135,48 +116,48 @@ export class StitchService {
 
     /**
      * Generates stitches between any two points. It will generate stitches all of the same length.
-     * @param start Start point of stitches
-     * @param end End point of stitches
+     * @param line The line of stitches
      * @param forwards Whether we stitch start to end or end to start
      * @param stitchLength Length of stitches
      * @param minStitchLength Stitch length can be reduced to this size for small lines.
      */
-    private generateStitchesBetweenPoints(start: Coord, end: Coord, forwards: boolean, stitchLength: number, minStitchLength: number): Coord[] {
+    private generateStitchesBetweenPoints(line: ScanLine, forwards: boolean, stitchLength: number, minStitchLength: number): Coord[] {
         const results: Coord[] = []
 
-        if (!forwards) {
-            const temp = end
-            end = start
-            start = temp
-        }
-
-        const totalLength = this.getCoordDistance(start, end)
-
+        const totalLength = Math.abs(line.end.distanceAlongScanLinePath - line.start.distanceAlongScanLinePath)
         const numStitches = Math.floor(totalLength / stitchLength)
-        if (numStitches < 1) {
+        if (numStitches <= 2) {
             if (totalLength >= minStitchLength) {
-                results.push(start)
-                results.push(end)
+                if (forwards) {
+                    results.push(line.start.point)
+                    results.push(line.end.point)
+                } else {
+                    results.push(line.end.point)
+                    results.push(line.start.point)
+                }
             }
         } else {
-            const xlength = (end.x - start.x) / numStitches
-            const ylength = (end.y - start.y) / numStitches
-
-            // We add 1 to the number of stitches as we need a stitch at the end point
+            const stitchLength = totalLength / numStitches
             for (let i = 0; i <= numStitches; ++i) {
-                results.push({x: xlength * i + start.x, y: ylength * i + start.y})
+                let d: number
+                if (forwards) {
+                    if (line.start.distanceAlongScanLinePath < line.end.distanceAlongScanLinePath) {
+                        d = line.start.distanceAlongScanLinePath + stitchLength * i
+                    } else {
+                        d = line.start.distanceAlongScanLinePath - stitchLength * i
+                    }
+                } else {
+                    if (line.end.distanceAlongScanLinePath < line.start.distanceAlongScanLinePath) {
+                        d = line.end.distanceAlongScanLinePath + stitchLength * i
+                    } else {
+                        d = line.end.distanceAlongScanLinePath - stitchLength * i
+                    }
+                }
+                const point = Path.getPointAtLength(line.scanLinePath, d) as Coord
+                results.push(point)
             }
         }
 
         return results
-    }
-
-    /**
-     * Returns distance between two coordinates
-     */
-    private getCoordDistance(a: Coord, b: Coord): number {
-        const x = a.x - b.x
-        const y = a.y - b.y
-        return Math.sqrt(x * x + y * y)
     }
 }
