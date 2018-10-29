@@ -37,7 +37,7 @@ export class ScanLinesService {
         const elementPath = this.svgService.elementPathToViewBoxCoords(element)
         const elementBBox = Path.getBBox(elementPath)
 
-        const scanLineSeparation = this.calculateLineSeparation(elementBBox, heightMM * 3)
+        const scanLineSeparation = this.calculateLineSeparation(elementBBox, heightMM)
 
         const elementSegments = this.getPathSegments(elementPath)
         const elementSegmentLengths = elementSegments.map(seg => Path.getTotalLength(seg.join()))
@@ -123,10 +123,16 @@ export class ScanLinesService {
         const bbox = Path.getBBox(subpath)
 
         // Due to rounding we need to expand the box a bit
-        bbox.x = bbox.x - 0.001
-        bbox.y = bbox.y - 0.001
-        bbox.height = bbox.height + 0.002
-        bbox.width = bbox.width + 0.002
+        const expandBy = 0.01
+        if (bbox.width < 1) {
+            bbox.x = bbox.x - expandBy
+            bbox.width = bbox.width + expandBy * 2
+        }
+
+        if (bbox.height < 1) {
+            bbox.y = bbox.y - expandBy
+            bbox.height = bbox.height + expandBy * 2
+        }
         return Path.isPointInsideBBox(bbox, x, y)
     }
 
@@ -149,8 +155,8 @@ export class ScanLinesService {
     private toScanLine(start: Snap.IntersectionDot, end: Snap.IntersectionDot, scanLinePath: string, elementSegmentLengths: number[], lengthsToEndOfElementSegments: number[]): ScanLine {
         return {
             scanLinePath: scanLinePath,
-            start: this.getIntersection(start, elementSegmentLengths, lengthsToEndOfElementSegments, scanLinePath),
-            end: this.getIntersection(end, elementSegmentLengths, lengthsToEndOfElementSegments, scanLinePath),
+            start: this.newIntersection(start, elementSegmentLengths, lengthsToEndOfElementSegments, scanLinePath),
+            end: this.newIntersection(end, elementSegmentLengths, lengthsToEndOfElementSegments, scanLinePath),
         }
     }
 
@@ -158,13 +164,26 @@ export class ScanLinesService {
      * Returns an Intersection object. This is just an intersection point with some additional info about path distances that will make it easier to traverse between the
      * intersection points we are trying to add stitches.
      */
-    private getIntersection(intersectionDot: Snap.IntersectionDot, elementSegmentLengths: number[], lengthsToEndOfElementSegments: number[], scanLinePath: string): Intersection {
+    private newIntersection(intersectionDot: Snap.IntersectionDot, elementSegmentLengths: number[], lengthsToEndOfElementSegments: number[], scanLinePath: string): Intersection {
+
+        const scanlinePathSegments = this.getPathSegments(scanLinePath)
+        const scanLinePathSegmentsLengths = scanlinePathSegments.map(seg => Path.getTotalLength(seg.join()))
+        const lengthsToEndOfScanLineSegments = scanLinePathSegmentsLengths.map((len, i) => {
+            if (i > 0) {
+                return len + scanLinePathSegmentsLengths[i - i]
+            } else {
+                return len
+            }
+        })
+
+
         return {
             point: {x: intersectionDot.x, y: intersectionDot.y},
             distanceAlongElementPath: lengthsToEndOfElementSegments[intersectionDot.segment1 - 1] + elementSegmentLengths[intersectionDot.segment1] * intersectionDot.t1,
 
             // TODO use the scanlinepath segments array calculated in PatchTValues so it works with complex scanline paths
-            distanceAlongScanLinePath: Path.getTotalLength(scanLinePath) * intersectionDot.t2
+            // distanceAlongScanLinePath: Path.getTotalLength(scanLinePath) * intersectionDot.t2
+            distanceAlongScanLinePath: lengthsToEndOfScanLineSegments[intersectionDot.segment2 - 1] + scanLinePathSegmentsLengths[intersectionDot.segment2] * intersectionDot.t2,
         }
     }
 
@@ -259,6 +278,7 @@ export class ScanLinesService {
         const dy = -separation * 0.01
         let intersections: IntersectionDot[]
         let originalY: number | undefined
+        const originalPath = scanLinePath
         let offset = dy
         do {
             intersections = Path.intersection(elementPath, scanLinePath)
@@ -269,7 +289,7 @@ export class ScanLinesService {
                     originalY = intersections[0].y
                 }
 
-                scanLinePath = Path.map(scanLinePath, matrix.translate(0, offset))
+                scanLinePath = (<string[]><any>Path.map(originalPath, matrix.translate(0, offset))).join()
                 offset += dy
             }
         } while (intersections.length % 2 !== 0)
@@ -277,14 +297,14 @@ export class ScanLinesService {
         // Reset the Y coord so that the intersections are at the correct height.
         if (originalY !== undefined) {
             intersections.forEach(intersection => intersection.y = originalY!)
-            const matrix = SnapCjs.matrix() as Snap.Matrix
-            scanLinePath = Path.map(scanLinePath, matrix.translate(0, -offset))
+            // const matrix = SnapCjs.matrix() as Snap.Matrix
+            // scanLinePath = (<string[]><any>Path.map(scanLinePath, matrix.translate(0, -offset))).join()
         }
 
         // As we don't know the order in which the intersections will be returned, sort them by increasing x value. Not sure what will happen if we ever have a vertical
         // path of stitches
         intersections.sort((i1, i2) => i1.x - i2.x)
 
-        return {intersections: intersections, scanLinePath: scanLinePath}
+        return {intersections: intersections, scanLinePath: originalPath}
     }
 }
