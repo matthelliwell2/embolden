@@ -43,7 +43,7 @@ export class ToolbarComponent implements OnInit {
     onFilesAdded() {
         const r = new FileReader()
         r.onload = (file) => {
-            this.stitchCentralService.loadFile(file.target!.result)
+            this.stitchCentralService.loadFile((<FileReader>file.target)!.result as string)
         }
 
         r.readAsText(this.file.nativeElement.files[0])

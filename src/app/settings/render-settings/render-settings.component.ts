@@ -19,7 +19,7 @@ export class RenderSettingsComponent implements OnInit {
         floor: 0,
         ceil: 1,
         step: 0.01,
-        precision: 2
+        precisionLimit: 2
     }
 
     ngOnInit() {
