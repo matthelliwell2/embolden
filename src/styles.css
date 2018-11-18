@@ -12,3 +12,10 @@
 .rounded-1 {
     border-radius: 1rem !important;
 }
+
+.stitchableElement {
+    stroke: #000;
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+    fill-opacity: 0;
+}

@@ -1,11 +1,6 @@
 export interface Coord {
-    x: number,
+    x: number
     y: number
-}
-
-export interface Line {
-    start: Coord
-    end: Coord
 }
 
 export interface Rectangle {

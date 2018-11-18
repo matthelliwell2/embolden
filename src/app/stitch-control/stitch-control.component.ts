@@ -1,43 +1,43 @@
-import {Component, OnInit} from '@angular/core'
-import {StitchCentralService} from "../stitch-central.service"
-import {Subscription} from "rxjs"
-import {ElementProperties, SatinFillType} from "../models"
+import { Component, OnDestroy, OnInit, Renderer2 } from "@angular/core"
+import { SatinFillType, Shape } from "../models"
+import { PubSubService } from "../pub-sub.service"
+import { ShapeService } from "../shape.service"
+import { StitchService } from "../stitch.service"
 
 @Component({
-    selector: 'app-stitch-control',
-    templateUrl: './stitch-control.component.html',
-    styleUrls: ['./stitch-control.component.css']
+    selector: "app-stitch-control",
+    templateUrl: "./stitch-control.component.html",
+    styleUrls: ["./stitch-control.component.css"]
 })
-export class StitchControlComponent implements OnInit {
-
+export class StitchControlComponent implements OnInit, OnDestroy {
     fillTypes = Object.keys(SatinFillType)
-    private subscription: Subscription
-    selectedElement: ElementProperties | undefined
+    selectedShape: Shape | undefined = undefined
+    scaling: number
 
-    constructor(private stitchCentralService: StitchCentralService) {
-    }
+    constructor(private pubSubService: PubSubService, private stitchService: StitchService, private shapeService: ShapeService, private renderer: Renderer2) {}
 
     ngOnInit() {
-        this.subscription = this.stitchCentralService.subscribeToSelectionEvents(this.onElementSelected, this.onElementDeselected)
-        this.selectedElement = this.stitchCentralService.selectedElement
+        this.pubSubService.subscribe(this)
     }
 
-    ngOnDestroy() {
-        if (this.subscription !== undefined) {
-            this.subscription.unsubscribe()
-        }
+    ngOnDestroy(): void {
+        this.pubSubService.unsubscribe(this)
+    }
+
+    onFileLoaded(file: { svg: SVGSVGElement; scaling: number }) {
+        this.scaling = file.scaling
     }
 
     onFillTypeSelected(type: string) {
-        this.selectedElement!.fillType = SatinFillType[type]
-        this.stitchCentralService.fill(this.selectedElement!)
+        this.selectedShape!.fillType = SatinFillType[type]
+        this.stitchService.fill(this.selectedShape!, this.scaling, this.renderer)
     }
 
-    readonly onElementSelected = (element: ElementProperties) => {
-        this.selectedElement = element
+    onElementSelected(element: SVGPathElement) {
+        this.selectedShape = this.shapeService.getShape(element, this.renderer)
     }
 
-    readonly onElementDeselected = (element: ElementProperties) => {
-        this.selectedElement = undefined
+    onElementDeselected() {
+        this.selectedShape = undefined
     }
 }

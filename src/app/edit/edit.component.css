@@ -1,5 +1,5 @@
-#svg-container {
-    border:2px solid darkslategrey;
+.svg-container {
+    border: 2px solid darkslategrey;
     background: #f0f0f0;
     height: 99.9vh;
     overflow: hidden;
@@ -25,14 +25,15 @@
 :host ::ng-deep .selected-element {
     animation-name: highlight;
     animation-duration: 200ms;
-    animation-iteration-count: 1;
+    animation-iteration-count: 3;
 }
 
 @keyframes highlight {
-    0%, 100% {
-        opacity: 1;
+    0%,
+    100% {
+        stroke-width: 1;
     }
     50% {
-        opacity: 0.25;
+        stroke-width: 3;
     }
 }

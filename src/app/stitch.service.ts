@@ -1,51 +1,52 @@
-import * as SnapCjs from 'snapsvg-cjs'
-import * as Snap from 'snapsvg'
-import {Injectable} from '@angular/core'
-import {SvgService} from "./svg.service/svg.service"
-import {ScanLinesService} from "./scan-lines.service"
-import {SatinFillType} from "./models"
-import {Coord, ScanLine} from "./svg.service/models"
-
-const Path = SnapCjs.path as Snap.Path
+import { Injectable, Renderer2 } from "@angular/core"
+import { ScanLineService } from "./scan-line.service"
+import { SatinFillType, Shape } from "./models"
+import { Coord } from "./svg.service/models"
 
 /**
  * This class generates stitches for elements acccording to the specified style, fill type etc. It just returns
  * stitches without attempting to draw them or store them.
  */
 @Injectable({
-    providedIn: 'root'
+    providedIn: "root"
 })
 export class StitchService {
-
     private static readonly ROW_HEIGHT = 0.4
-    private static readonly STITCH_LENGTH = 3.5
-    private static readonly MIN_STITCH_LENGTH = 1.5
+    // private static readonly STITCH_LENGTH = 3.5
+    // private static readonly MIN_STITCH_LENGTH = 1.5
 
-    constructor(private svgService: SvgService,
-                private scanLineService: ScanLinesService) {
-    }
+    constructor(private scanLineService: ScanLineService) {}
 
-
-    fill(element: Snap.Element, type: SatinFillType): Coord[] {
-        if (type === SatinFillType.None) {
+    fill(shape: Shape, scaling: number, renderer: Renderer2): Coord[] {
+        if (shape.fillType === SatinFillType.None) {
             return []
         }
 
-        // TODO support more than paths?
-        if (element.type !== 'path') {
-            throw new Error(`Elements of type ${element.type} are not supported`)
-        }
+        this.closePath(shape.element)
 
-        this.closePath(element)
+        const scanlines = this.scanLineService.generateScanLines(StitchService.ROW_HEIGHT, shape, scaling, renderer)
+        console.log("columns=", scanlines.length)
 
-        const scanLines = this.scanLineService.generateScanLines(StitchService.ROW_HEIGHT, element)
-
+        /*
         const stitches = this.generateStitches(element, scanLines)
 
         console.log("Num stitches =", stitches.length)
         return stitches
+*/
+        return []
     }
 
+    /**
+     * Make's sure that the path is closed otherwise it can't be filled properly. We don't do this when we load the file as we might not be filling the shape
+     */
+    private closePath(element: SVGPathElement) {
+        const path = element.getAttribute("d")!.trim()
+        if (!path.endsWith("Z") && !path.endsWith("z")) {
+            element.setAttribute("d", path + "Z")
+        }
+    }
+
+    /*
     private generateStitches(element: Snap.Element, scanLines: ScanLine[][]): Coord[] {
         let allStitches: Coord[] = []
         const stitchLength = this.svgService.mmToViewBoxLength(StitchService.STITCH_LENGTH)
@@ -76,9 +77,9 @@ export class StitchService {
         return allStitches
     }
 
-    /**
+    /!**
      * Generates stitches for a single column of scan lines.
-     */
+     *!/
     private generateStitchesForColumn(columnOfLines: ScanLine[], stitchLength: number, minStitchLength: number, columnStitches: Coord[]) {
         let forwards = true
         columnOfLines.forEach((line) => {
@@ -95,32 +96,22 @@ export class StitchService {
         return columnStitches
     }
 
-    /**
+    /!**
      * Generates stitches along the edge of the element between the two coorinates. If the points are close enough together not to need intermediate stitches then it returns an
      * empty array.
-     */
+     *!/
     private generateStitchesAlongPath(element: Snap.Element, from: Coord, to: Coord, stitchLength: number, minStitchLength: number): Coord[] {
 
         return []
     }
 
-    /**
-     * Make's sure that the path is closed otherwise it can't be filled properly
-     */
-    private closePath(element: Snap.Element) {
-        const path = element.attr("d").trim()
-        if (!path.endsWith("Z") && !path.endsWith("z")) {
-            element.attr(({d: path + "Z"}))
-        }
-    }
-
-    /**
+    /!**
      * Generates stitches between any two points. It will generate stitches all of the same length.
      * @param line The line of stitches
      * @param forwards Whether we stitch start to end or end to start
      * @param stitchLength Length of stitches
      * @param minStitchLength Stitch length can be reduced to this size for small lines.
-     */
+     *!/
     private generateStitchesBetweenPoints(line: ScanLine, forwards: boolean, stitchLength: number, minStitchLength: number): Coord[] {
         const results: Coord[] = []
 
@@ -160,4 +151,5 @@ export class StitchService {
 
         return results
     }
+*/
 }

@@ -1,10 +1,15 @@
 <nav class="navbar navbar-expand-lg navbar-light bg-light ui-draggable border border-info rounded-1" draggable="true" [style.top.px]="topPos" [style.left.px]="leftPos">
-    <div class="navbar-brand">
-        <fa-icon icon="bold"></fa-icon>
-    </div>
+    <div class="navbar-brand"><fa-icon icon="bold"></fa-icon></div>
 
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
-            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+    <button
+        class="navbar-toggler"
+        type="button"
+        data-toggle="collapse"
+        data-target="#navbarSupportedContent"
+        aria-controls="navbarSupportedContent"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+    >
         <span class="navbar-toggler-icon"></span>
     </button>
 
@@ -15,13 +20,7 @@
                     Open
                     <fa-icon icon="folder-open"></fa-icon>
                 </button>
-                <input type="file" #file (change)="onFilesAdded()" style="display: none" accept=".svg, .txt"/>
-            </li>
-            <li class="nav-item active mr-3">
-                <button class="btn" placement="right" ngbTooltip="Restore" (click)="onRestore()" [disabled]="!stitchCentralService.isFileLoaded">
-                    Restore
-                    <fa-icon icon="window-restore"></fa-icon>
-                </button>
+                <input type="file" #file (change)="onFilesAdded()" style="display: none" accept=".svg, .txt" />
             </li>
             <li class="nav-item active">
                 <button class="btn" placement="right" ngbTooltip="Restore" (click)="onSettings()">

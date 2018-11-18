@@ -1,20 +1,20 @@
-import * as Snap from "snapsvg"
-import {Coord} from "./svg.service/models"
-
 /**
  *  The properties for an element that we use to control how it is stitched
  */
-export class ElementProperties {
-    constructor(public element: Snap.Element) {}
+export class Shape {
+    /**
+     * @param element Element as displayed on the screen
+     * @param elementSegments Elements for each segment of the path. These are not added to the DOM at all
+     */
+    constructor(public element: SVGPathElement, public elementSegments: SVGPathElement[]) {}
 
-    stitches: Coord[] = []
+    stitches: Point[] = []
     fillType: SatinFillType = SatinFillType.None
-    isSelected: boolean = false
 
     /**
      * The svg group that contains the lines etc for the display of the stitches.
      */
-    stitchGroup: Snap.Element | undefined = undefined
+    // stitchGroup: Snap.Element | undefined = undefined
 }
 
 /**
@@ -23,4 +23,9 @@ export class ElementProperties {
 export enum SatinFillType {
     None = "None",
     Natural = "Natural"
+}
+
+export interface Point {
+    x: number
+    y: number
 }
