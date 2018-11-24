@@ -35,8 +35,12 @@ export const findElementForPoint = (elements: SVGPathElement[], point: Point): n
             } else {
                 return smallestSegment
             }
-        }, 0)
+        }, matchingIndexes[0])
     }
+}
+
+export const getTotalLength = (elements: SVGPathElement[]): number => {
+    return elements.reduce((total, element) => total + element.getTotalLength(), 0)
 }
 
 /**
@@ -44,6 +48,26 @@ export const findElementForPoint = (elements: SVGPathElement[], point: Point): n
  * passed into has a move command and either a line or curve command afterwards. Anything else will return the wrong results.
  */
 export const getTValueAtPoint = (element: SVGPathElement, target: Point): number => {
+    const coords: Point[] = getCoordsFromPath(element)
+
+    if (coords.length == 4) {
+        const b = new Bezier(coords)
+        return b.project(target).t!
+    } else if (coords.length === 2) {
+        // We've got a line so we can do the calculation here.
+        const t = (target.x - coords[0].x) / (coords[1].x - coords[0].x)
+        if (!isFinite(t) || isNaN(t)) {
+            return (target.y - coords[0].y) / (coords[1].y - coords[0].y)
+        } else {
+            return t
+        }
+    } else {
+        console.log("Unsupport path ", element.getAttribute("d"))
+        return 0
+    }
+}
+
+export const getCoordsFromPath = (element: SVGPathElement): Point[] => {
     const path = svgpath(element.getAttribute("d") as string)
     const coords: Point[] = []
     path.iterate(
@@ -62,21 +86,7 @@ export const getTValueAtPoint = (element: SVGPathElement, target: Point): number
         }
     )
 
-    if (coords.length == 4) {
-        const b = new Bezier(coords)
-        return b.project(target).t!
-    } else if (coords.length === 2) {
-        // We've got a line so we can do the calculation here.
-        const t = (target.x - coords[0].x) / (coords[0].x - coords[1].x)
-        if (!isFinite(t) || isNaN(t)) {
-            return (target.y - coords[0].y) / (coords[0].y - coords[1].y)
-        } else {
-            return t
-        }
-    } else {
-        console.log("Unsupport path ", element.getAttribute("d"))
-        return 0
-    }
+    return coords
 }
 
 /**

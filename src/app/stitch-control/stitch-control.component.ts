@@ -3,6 +3,7 @@ import { SatinFillType, Shape } from "../models"
 import { PubSubService } from "../pub-sub.service"
 import { ShapeService } from "../shape.service"
 import { StitchService } from "../stitch.service"
+import { RenderService } from "../render.service"
 
 @Component({
     selector: "app-stitch-control",
@@ -14,7 +15,13 @@ export class StitchControlComponent implements OnInit, OnDestroy {
     selectedShape: Shape | undefined = undefined
     scaling: number
 
-    constructor(private pubSubService: PubSubService, private stitchService: StitchService, private shapeService: ShapeService, private renderer: Renderer2) {}
+    constructor(
+        private pubSubService: PubSubService,
+        private stitchService: StitchService,
+        private shapeService: ShapeService,
+        private renderer: Renderer2,
+        private renderService: RenderService
+    ) {}
 
     ngOnInit() {
         this.pubSubService.subscribe(this)
@@ -31,6 +38,7 @@ export class StitchControlComponent implements OnInit, OnDestroy {
     onFillTypeSelected(type: string) {
         this.selectedShape!.fillType = SatinFillType[type]
         this.stitchService.fill(this.selectedShape!, this.scaling, this.renderer)
+        this.renderService.render(this.selectedShape!, this.scaling, this.renderer)
     }
 
     onElementSelected(element: SVGPathElement) {

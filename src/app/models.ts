@@ -14,7 +14,7 @@ export class Shape {
     /**
      * The svg group that contains the lines etc for the display of the stitches.
      */
-    // stitchGroup: Snap.Element | undefined = undefined
+    stitchGroup: SVGGElement | undefined = undefined
 }
 
 /**
@@ -28,4 +28,22 @@ export enum SatinFillType {
 export interface Point {
     x: number
     y: number
+}
+
+export interface Intersection {
+    point: Point
+    scanlineDistance: number
+    elementDistance: number
+    segmentNumber: number
+    segmentTValue: number
+}
+
+export interface IntersectionPair {
+    start: Intersection
+    end: Intersection
+}
+
+export interface Intersections {
+    intersectionPoints: IntersectionPair
+    scanline: SVGPathElement
 }
