@@ -2,7 +2,6 @@ import * as Path from "./lib/path"
 import { Injectable, Renderer2 } from "@angular/core"
 import { ScanLineService } from "./scan-line.service"
 import { Intersection, Intersections, Point, SatinFillType, Shape } from "./models"
-import { Coord } from "./svg.service/models"
 
 const Bezier = require("bezier-js")
 
@@ -239,8 +238,8 @@ export class StitchService {
      * @param stitchLength Length of stitches
      * @param minStitchLength Stitch length can be reduced to this size for small lines.
      */
-    private generateStitchesBetweenPoints(line: Intersections, forwards: boolean, stitchLength: number, minStitchLength: number): Coord[] {
-        const results: Coord[] = []
+    private generateStitchesBetweenPoints(line: Intersections, forwards: boolean, stitchLength: number, minStitchLength: number): Point[] {
+        const results: Point[] = []
 
         const end = line.intersectionPoints.end
         const start = line.intersectionPoints.start
