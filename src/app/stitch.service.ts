@@ -1,7 +1,7 @@
-import * as Path from "./lib/path"
 import { Injectable, Renderer2 } from "@angular/core"
 import { ScanLineService } from "./scan-line.service"
 import { Intersection, Intersections, Point, SatinFillType, Shape } from "./models"
+import * as Lib from "./lib/lib"
 
 const Bezier = require("bezier-js")
 
@@ -13,8 +13,8 @@ const Bezier = require("bezier-js")
     providedIn: "root"
 })
 export class StitchService {
-    private static readonly ROW_HEIGHT = 0.4
-    // private static readonly ROW_HEIGHT = 5
+    // private static readonly ROW_HEIGHT = 0.4
+    private static readonly ROW_HEIGHT = 2
     private static readonly STITCH_LENGTH = 3.5
     private static readonly MIN_STITCH_LENGTH = 1.5
 
@@ -45,27 +45,26 @@ export class StitchService {
         }
     }
 
-    private generateStitches(shape: Shape, scanLines: Intersections[][], scaling: number) {
+    private generateStitches(shape: Shape, allScanLines: Intersections[][], scaling: number) {
         let allStitches: Point[] = []
         const stitchLength = StitchService.STITCH_LENGTH * scaling
         const minStitchLength = StitchService.MIN_STITCH_LENGTH * scaling
 
-        let previousColumnOfLines: Intersections[] | undefined = undefined
+        let previousColumnOfScanLines: Intersections[] | undefined = undefined
         // let insert = false
-        scanLines.forEach(columnOfLines => {
-            let columnStitches: Point[] = []
-            columnStitches = this.generateStitchesForColumn(columnOfLines, stitchLength, minStitchLength, columnStitches)
+        allScanLines.forEach(columnOfScanLines => {
+            const stitchesForColumn = this.generateStitchesForScanLines(columnOfScanLines, stitchLength, minStitchLength)
 
             // Generate stitches from the end of the last column to the start of this column
-            if (previousColumnOfLines !== undefined && previousColumnOfLines!.length > 0 && columnStitches.length > 0) {
+            if (previousColumnOfScanLines !== undefined && previousColumnOfScanLines!.length > 0 && stitchesForColumn.length > 0) {
                 let from: Intersection
-                if (previousColumnOfLines.length % 2 === 0) {
-                    from = previousColumnOfLines[previousColumnOfLines!.length - 1].intersectionPoints.start
+                if (previousColumnOfScanLines.length % 2 === 0) {
+                    from = previousColumnOfScanLines[previousColumnOfScanLines!.length - 1].start
                 } else {
-                    from = previousColumnOfLines[previousColumnOfLines!.length - 1].intersectionPoints.end
+                    from = previousColumnOfScanLines[previousColumnOfScanLines!.length - 1].end
                 }
 
-                const to = columnOfLines[0].intersectionPoints.start
+                const to = columnOfScanLines[0].start
                 const joinStitches = this.generateStitchesAlongShape(shape, from, to, minStitchLength)
                 if (joinStitches.length > 0) {
                     console.log("join stitches:", joinStitches.length)
@@ -73,12 +72,12 @@ export class StitchService {
                 }
             }
 
-            if (columnStitches.length > 0) {
-                previousColumnOfLines = columnOfLines
+            if (stitchesForColumn.length > 0) {
+                previousColumnOfScanLines = columnOfScanLines
             }
 
             // if (insert) {
-            allStitches.push(...columnStitches)
+            allStitches.push(...stitchesForColumn)
             // insert = false
             // }
             // insert = true
@@ -90,84 +89,99 @@ export class StitchService {
     /**
      * Generates stitches for a single column of scan lines.
      */
-    private generateStitchesForColumn(columnOfLines: Intersections[], stitchLength: number, minStitchLength: number, columnStitches: Point[]) {
+    private generateStitchesForScanLines(scanLines: Intersections[], stitchLength: number, minStitchLength: number): Point[] {
+        const allStitches: Point[] = []
         let forwards = true
-        columnOfLines.forEach(line => {
+        scanLines.forEach(scanLine => {
             // Generate stitches along the scan line
-            const stitches = this.generateStitchesBetweenPoints(line, forwards, stitchLength, minStitchLength)
+            const stitches = this.generateStitchesForScanLine(scanLine, forwards, stitchLength, minStitchLength)
 
             if (stitches.length > 0) {
-                columnStitches = columnStitches.concat(stitches)
+                allStitches.push(...stitches)
             }
 
             forwards = !forwards
         })
 
-        return columnStitches
+        return allStitches
     }
 
     /**
      * Generates stitches along the edge of the element between the two coorinates. If the points are close enough together not to need intermediate stitches then it returns an
      * empty array. It generates stitches either forwards or backwards along the path, which ever way is shorter. It uses the compute function in bezier-js as this natuarally
      * ends up giving points that are closer together on sharper parts of the curve.
-     * TODO simplify all this path calculation stuff. Elements and scanlines should be treated the same in calculations.
      */
     private generateStitchesAlongShape(shape: Shape, from: Intersection, to: Intersection, stitchLength: number): Point[] {
-        const fromDistance = from.elementDistance
-        const toDistance = to.elementDistance
+        const fromDistance = this.calculateDistanceAlongPath(shape, from)
+        const toDistance = this.calculateDistanceAlongPath(shape, to)
         const totalLen = shape.element.getTotalLength()
 
-        const forwardDistance = this.forwardDistance(totalLen, fromDistance, toDistance)
-        const backwardDistance = this.backwardDistance(totalLen, fromDistance, toDistance)
+        // Decide if it is shorter to move between the points either forwards or backwards along the path
+        const forwardDistance = this.calculateDistanceBetweenPointsOnPath(totalLen, fromDistance, toDistance)
+        const backwardDistance = this.calculateDistanceBetweenPointsOnPath(totalLen, toDistance, fromDistance)
 
-        // const distance = Math.min(forwardDistance, backwardDistance)
         const forward = forwardDistance <= backwardDistance
+        const increment = forward ? 1 : -1
 
-        const stitches: Point[] = []
+        // we need to work out over which segments we'll stitch. As this may involving past the start of the curve, we have to use modulo arithmetic
+        const segmentIndexes: number[] = []
+        for (let i = from.segmentNumber; i !== to.segmentNumber; i = (i + increment) % shape.elementSegments.length) {
+            segmentIndexes.push(i)
+        }
+
         if (from.segmentNumber !== to.segmentNumber) {
-            if (forward) {
-                stitches.push(...this.generateStitchesAlongElement(shape.elementSegments[from.segmentNumber], from.segmentTValue, 1, stitchLength))
-
-                for (let i = from.segmentNumber + 1; i < to.segmentNumber; ++i) {
-                    stitches.push(...this.generateStitchesAlongElement(shape.elementSegments[i], 0, 1, stitchLength))
-                }
-
-                stitches.push(...this.generateStitchesAlongElement(shape.elementSegments[to.segmentNumber], 0, to.segmentTValue, stitchLength))
-            } else {
-                stitches.push(...this.generateStitchesAlongElement(shape.elementSegments[from.segmentNumber], from.segmentTValue, 0, stitchLength))
-
-                for (let i = from.segmentNumber - 1; i > to.segmentNumber; --i) {
-                    stitches.push(...this.generateStitchesAlongElement(shape.elementSegments[i], 1, 0, stitchLength))
-                }
-
-                stitches.push(...this.generateStitchesAlongElement(shape.elementSegments[to.segmentNumber], 1, to.segmentTValue, stitchLength))
-            }
-        } else {
-            if (forward) {
-                stitches.push(...this.generateStitchesAlongElement(shape.elementSegments[from.segmentNumber], from.segmentTValue, to.segmentTValue, stitchLength))
-            } else {
-                stitches.push(...this.generateStitchesAlongElement(shape.elementSegments[to.segmentNumber], to.segmentTValue, from.segmentTValue, stitchLength))
-            }
+            segmentIndexes.push(to.segmentNumber)
         }
-
-        return stitches
-        /*
-
-
-        const numStitches = Math.round(distance / stitchLength) + 1
-        if (numStitches === 0) {
-            return []
-        }
-        const adjustedStitchLength = distance / numStitches
 
         const stitches: Point[] = []
-        for (let i = 1; i < numStitches - 1; ++i) {
-            const distance = fromDistance + i * adjustedStitchLength * direction
-            stitches.push(shape.element.getPointAtLength(distance))
+        if (segmentIndexes.length === 1) {
+            // The from and to points are on the same segment so we can just stitch from one to the other
+            const currentSegment = segmentIndexes[0]
+            stitches.push(...this.generateStitchesAlongElement(shape.elementSegments[currentSegment], from.segmentTValue, to.segmentTValue, stitchLength))
+        } else if (forward) {
+            // We need to move across more than one segment so start by stitching to the end of the first segment
+            stitches.push(...this.generateStitchesAlongElement(shape.elementSegments[from.segmentNumber], from.segmentTValue, 1, stitchLength))
+            for (let i = 1; i < segmentIndexes.length - 1; ++i) {
+                // Stitch all the way along any segments inbetween the first and last segments
+                const currentSegment = segmentIndexes[i]
+                stitches.push(...this.generateStitchesAlongElement(shape.elementSegments[currentSegment], 0, 1, stitchLength))
+            }
+
+            // Finally stitch from the start of the last segment to our final point
+            stitches.push(...this.generateStitchesAlongElement(shape.elementSegments[to.segmentNumber], 0, to.segmentTValue, stitchLength))
+        } else {
+            // This is the same as above but we are moving in the other direction. We could combine this with the code above but that ends up making the code even harder
+            // to follow than it is now.
+            stitches.push(...this.generateStitchesAlongElement(shape.elementSegments[from.segmentNumber], from.segmentTValue, 0, stitchLength))
+            for (let i = 1; i < segmentIndexes.length - 1; ++i) {
+                const currentSegment = segmentIndexes[i]
+                stitches.push(...this.generateStitchesAlongElement(shape.elementSegments[currentSegment], 1, 0, stitchLength))
+            }
+            stitches.push(...this.generateStitchesAlongElement(shape.elementSegments[to.segmentNumber], 1, to.segmentTValue, stitchLength))
         }
 
         return stitches
-*/
+    }
+
+    /**
+     * Calculate distance along the element path to the intersection
+     */
+    private calculateDistanceAlongPath(shape: Shape, intersection: Intersection): number {
+        return (
+            Lib.getTotalLength(shape.elementSegments.slice(0, intersection.segmentNumber)) +
+            intersection.segmentTValue * shape.elementSegments[intersection.segmentNumber].getTotalLength()
+        )
+    }
+
+    /**
+     * Calculates the distance along a path of two points on the path, moving forwards on the path, allowing for the fact that this might go over the start of the path
+     */
+    private calculateDistanceBetweenPointsOnPath(totalLen: number, from: number, to: number): number {
+        if (from < to) {
+            return to - from
+        } else {
+            return totalLen - from + to
+        }
     }
 
     private generateStitchesAlongElement(element: SVGPathElement, from: number, to: number, stitchLength: number): Point[] {
@@ -178,7 +192,7 @@ export class StitchService {
         }
 
         const stitches: Point[] = []
-        const coords = Path.getCoordsFromPath(element)
+        const coords = Lib.getControlPointsFromPath(element)
         if (coords.length == 4) {
             const b = new Bezier(coords)
 
@@ -210,70 +224,39 @@ export class StitchService {
     }
 
     /**
-     * Calculates the distance along a path of two points on the path, moving forwards on the path, allowing for the fact that this might go over the start of the path
-     */
-    private forwardDistance(totalLen: number, from: number, to: number): number {
-        if (from < to) {
-            return to - from
-        } else {
-            return totalLen - from + to
-        }
-    }
-
-    /**
-     * Calculates the distance along a path of two points on the path, moving backwards on the path, allowing for the fact that this might go over the start of the path
-     */
-    private backwardDistance(totalLen: number, from: number, to: number): number {
-        if (from < to) {
-            return from + totalLen - to
-        } else {
-            return from - to
-        }
-    }
-
-    /**
      * Generates stitches between any two points. It will generate stitches all of the same length.
-     * @param line The line of stitches
+     * @param scanLine The line of stitches
      * @param forwards Whether we stitch start to end or end to start
      * @param stitchLength Length of stitches
-     * @param minStitchLength Stitch length can be reduced to this size for small lines.
      */
-    private generateStitchesBetweenPoints(line: Intersections, forwards: boolean, stitchLength: number, minStitchLength: number): Point[] {
+    private generateStitchesForScanLine(scanLine: Intersections, forwards: boolean, stitchLength: number, minStitchLength: number): Point[] {
         const results: Point[] = []
 
-        const end = line.intersectionPoints.end
-        const start = line.intersectionPoints.start
-        const totalLength = Math.abs(end.scanlineDistance - start.scanlineDistance)
-        const numStitches = Math.floor(totalLength / stitchLength)
-        if (numStitches <= 2) {
+        let start: Intersection
+        let end: Intersection
+        if (forwards) {
+            start = scanLine.start
+            end = scanLine.end
+        } else {
+            start = scanLine.end
+            end = scanLine.start
+        }
+
+        const totalLength = end.scanlineDistance - start.scanlineDistance
+
+        if (Math.abs(totalLength) <= stitchLength) {
             if (totalLength >= minStitchLength) {
-                if (forwards) {
-                    results.push(start.point)
-                    results.push(end.point)
-                } else {
-                    results.push(end.point)
-                    results.push(start.point)
-                }
+                results.push(start.point)
+                results.push(end.point)
             }
         } else {
-            const stitchLength = totalLength / numStitches
-            for (let i = 0; i <= numStitches; ++i) {
-                let d: number
-                if (forwards) {
-                    if (start.scanlineDistance < end.scanlineDistance) {
-                        d = start.scanlineDistance + stitchLength * i
-                    } else {
-                        d = start.scanlineDistance - stitchLength * i
-                    }
-                } else {
-                    if (end.scanlineDistance < start.scanlineDistance) {
-                        d = end.scanlineDistance + stitchLength * i
-                    } else {
-                        d = end.scanlineDistance - stitchLength * i
-                    }
-                }
+            const numStitches = Math.floor(Math.abs(totalLength) / stitchLength)
 
-                const point = line.scanline.getPointAtLength(d)
+            const actualStitchLength = totalLength / numStitches
+            for (let i = 0; i <= numStitches; ++i) {
+                // Note actualStitchLength can be negative
+                const d = start.scanlineDistance + actualStitchLength * i
+                const point = scanLine.scanline.getPointAtLength(d)
                 results.push(point)
             }
         }

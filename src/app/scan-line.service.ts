@@ -1,7 +1,7 @@
 import { Injectable, Renderer2 } from "@angular/core"
 import * as svgIntersections from "svg-intersections"
-import { Intersection, IntersectionPair, Intersections, Point, Shape } from "./models"
-import * as Path from "./lib/path"
+import { Intersection, Intersections, Point, Shape } from "./models"
+import * as Lib from "./lib/lib"
 
 /**
  * This class is responsible for generate scan lines across an arbitrary shape.
@@ -22,8 +22,7 @@ export class ScanLineService {
     generateScanLines(heightMM: number, shape: Shape, scaling: number, renderer: Renderer2, minStitchLength: number): Intersections[][] {
         const elementBBox = shape.element.getBBox()
 
-        console.log("scaling", scaling, "separation", heightMM * scaling)
-        const scanLineSeparation = this.adjustLineSeparation(elementBBox, heightMM * scaling)
+        const scanLineSeparation = this.calculateLineSeparation(elementBBox, heightMM * scaling)
 
         const intersections = this.generateFullWidthScanLinePaths(scanLineSeparation, elementBBox)
             .map(path => this.stringToSVGElement(path, renderer, shape.element))
@@ -65,19 +64,16 @@ export class ScanLineService {
     }
 
     private calcuateDistanceAlongElementPath(shape: Shape, intersection: Intersection) {
-        const segmentNumber = Path.findElementForPoint(shape.elementSegments, intersection.point)
+        const segmentNumber = Lib.findElementIndexForPoint(shape.elementSegments, intersection.point)
         intersection.segmentNumber = segmentNumber
 
-        const startTValue = Path.getTValueAtPoint(shape.elementSegments[segmentNumber], intersection.point)
-        intersection.segmentTValue = startTValue
-
-        intersection.elementDistance = Path.getTotalLength(shape.elementSegments.slice(0, segmentNumber)) + startTValue * shape.elementSegments[segmentNumber].getTotalLength()
+        intersection.segmentTValue = Lib.calculateTValueForPoint(shape.elementSegments[segmentNumber], intersection.point)
     }
 
     private calculateDistancesAlongScanlinePath = (intersections: IntersectionRow): IntersectionRow => {
         intersections.intersectionPoints.forEach(pair => {
-            pair.start.scanlineDistance = Path.getTValueAtPoint(intersections.scanline, pair.start.point) * intersections.scanline.getTotalLength()
-            pair.end.scanlineDistance = Path.getTValueAtPoint(intersections.scanline, pair.end.point) * intersections.scanline.getTotalLength()
+            pair.start.scanlineDistance = Lib.calculateTValueForPoint(intersections.scanline, pair.start.point) * intersections.scanline.getTotalLength()
+            pair.end.scanlineDistance = Lib.calculateTValueForPoint(intersections.scanline, pair.end.point) * intersections.scanline.getTotalLength()
         })
 
         return intersections
@@ -132,7 +128,7 @@ export class ScanLineService {
                     }
                 } else {
                     const pair = intersection.intersectionPoints[col]
-                    column.push({ intersectionPoints: pair, scanline: intersection.scanline })
+                    column.push({ start: pair.start, end: pair.end, scanline: intersection.scanline })
                 }
             })
 
@@ -148,7 +144,7 @@ export class ScanLineService {
      * Adjusts the line seperation so that it fits evenly between the top and bottom of the space otherwise you can
      * get an gap on the top edge.
      */
-    private adjustLineSeparation(bbox: DOMRect, height: number): number {
+    private calculateLineSeparation(bbox: DOMRect, height: number): number {
         const counts = Math.floor(bbox.height / height)
         return bbox.height / counts
     }
@@ -197,8 +193,8 @@ export class ScanLineService {
 
         const intersections: IntersectionPair[] = []
         for (let i = 0; i < intersect.points.length; i += 2) {
-            const start: Intersection = { point: intersect.points[i], scanlineDistance: -1, elementDistance: -1, segmentNumber: -1, segmentTValue: -1 }
-            const end: Intersection = { point: intersect.points[i + 1], scanlineDistance: -1, elementDistance: -1, segmentNumber: -1, segmentTValue: -1 }
+            const start: Intersection = { point: intersect.points[i], scanlineDistance: -1, segmentNumber: -1, segmentTValue: -1 }
+            const end: Intersection = { point: intersect.points[i + 1], scanlineDistance: -1, segmentNumber: -1, segmentTValue: -1 }
             intersections.push({ start: start, end: end })
         }
 
@@ -245,6 +241,11 @@ export class ScanLineService {
 interface Intersect {
     status: string
     points: Point[]
+}
+
+interface IntersectionPair {
+    start: Intersection
+    end: Intersection
 }
 
 interface IntersectionRow {

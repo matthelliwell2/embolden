@@ -33,6 +33,7 @@ export class StitchControlComponent implements OnInit, OnDestroy {
 
     onFileLoaded(file: { svg: SVGSVGElement; scaling: number }) {
         this.scaling = file.scaling
+        this.selectedShape = undefined
     }
 
     onFillTypeSelected(type: string) {

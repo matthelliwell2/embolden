@@ -30,20 +30,18 @@ export interface Point {
     y: number
 }
 
+/**
+ * Intersection of a scanline and a path
+ */
 export interface Intersection {
     point: Point
     scanlineDistance: number
-    elementDistance: number
     segmentNumber: number
     segmentTValue: number
 }
 
-export interface IntersectionPair {
+export interface Intersections {
     start: Intersection
     end: Intersection
-}
-
-export interface Intersections {
-    intersectionPoints: IntersectionPair
     scanline: SVGPathElement
 }

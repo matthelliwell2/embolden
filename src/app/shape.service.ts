@@ -1,6 +1,7 @@
 import { Injectable, Renderer2 } from "@angular/core"
 import { Shape } from "./models"
 import * as svgpath from "svgpath"
+import { PubSubService } from "./pub-sub.service"
 import Point = SvgPanZoom.Point
 
 /**
@@ -16,7 +17,9 @@ export class ShapeService {
      */
     readonly shapes: Map<string, Shape> = new Map()
 
-    constructor() {}
+    constructor(private pubSubService: PubSubService) {
+        this.pubSubService.subscribe(this)
+    }
 
     getShape(element: SVGPathElement, renderer: Renderer2): Shape {
         const id = element.getAttribute("id") as string
@@ -27,6 +30,10 @@ export class ShapeService {
         }
 
         return this.shapes.get(id)!
+    }
+
+    onFileLoaded() {
+        this.shapes.clear()
     }
 
     private getSegmentPaths(element: SVGPathElement, renderer: Renderer2): SVGPathElement[] {
