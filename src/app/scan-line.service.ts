@@ -39,7 +39,7 @@ export class ScanLineService {
     /**
      * If the start and end point are too close together remove them as we can't stitch them together
      */
-    private removeSmallStitches(row: IntersectionRow, minStitchLength: number): IntersectionRow {
+    private removeSmallStitches(row: RowOfIntersections, minStitchLength: number): RowOfIntersections {
         row.intersectionPoints.filter(pair => this.distanceBetweenPoints(pair.start.point, pair.end.point) >= minStitchLength)
         return row
     }
@@ -54,7 +54,7 @@ export class ScanLineService {
      * Converts the intersection coordinate into distance along the path. This is needed because when we stitch we navigate along the path using the getPointAtLength method rather
      * than the actually coords.
      */
-    private calculateDistancesAlongElementPath = (shape: Shape, intersections: IntersectionRow): IntersectionRow => {
+    private calculateDistancesAlongElementPath = (shape: Shape, intersections: RowOfIntersections): RowOfIntersections => {
         intersections.intersectionPoints.forEach(pair => {
             this.calcuateDistanceAlongElementPath(shape, pair.start)
             this.calcuateDistanceAlongElementPath(shape, pair.end)
@@ -70,7 +70,7 @@ export class ScanLineService {
         intersection.segmentTValue = Lib.calculateTValueForPoint(shape.elementSegments[segmentNumber], intersection.point)
     }
 
-    private calculateDistancesAlongScanlinePath = (intersections: IntersectionRow): IntersectionRow => {
+    private calculateDistancesAlongScanlinePath = (intersections: RowOfIntersections): RowOfIntersections => {
         intersections.intersectionPoints.forEach(pair => {
             pair.start.scanlineDistance = Lib.calculateTValueForPoint(intersections.scanline, pair.start.point) * intersections.scanline.getTotalLength()
             pair.end.scanlineDistance = Lib.calculateTValueForPoint(intersections.scanline, pair.end.point) * intersections.scanline.getTotalLength()
@@ -96,42 +96,56 @@ export class ScanLineService {
      * -------------            ------------------
      * -------------            ------------------
      *
-     * would be split grouped together like
+     * would be grouped together like
      *
      * AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
      * AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-     * AAAAAAAAAAAAA            BBBBBBBBBBBBBBBBBB
-     * AAAAAAAAAAAAA            BBBBBBBBBBBBBBBBBB
-     * AAAAAAAAAAAAA            BBBBBBBBBBBBBBBBBB
+     * BBBBBBBBBBBBB            CCCCCCCCCCCCCCCCCC
+     * BBBBBBBBBBBBB            CCCCCCCCCCCCCCCCCC
+     * BBBBBBBBBBBBB            CCCCCCCCCCCCCCCCCC
      *
-     * We do this in multiple passes because trying to do it in a single pass is a bit quicker but much harder to
-     * understand.
+     *  giving intersections like
+     * AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+     * AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+     * BBBBBBBBBBBBB
+     * BBBBBBBBBBBBB
+     * BBBBBBBBBBBBB
+     * CCCCCCCCCCCCCCCCCC
+     * CCCCCCCCCCCCCCCCCC
+     * CCCCCCCCCCCCCCCCCC
      */
-    private sortIntoColumns(intersections: IntersectionRow[]): Intersections[][] {
+    private sortIntoColumns(rowsOfIntersections: RowOfIntersections[]): Intersections[][] {
         const results: Intersections[][] = []
 
         // Get the max number of columns across all the rows
-        const maxColumns = intersections
+        const maxColumns = rowsOfIntersections
             .map(row => row.intersectionPoints.length)
             .reduce((maxColumns, length): number => {
                 return length > maxColumns ? length : maxColumns
             }, 0)
 
         for (let col = 0; col < maxColumns; ++col) {
-            // Move up a column. Push each line into an array until we reach the end of the column
+            // Accumulate intersections into a column. We will start a new column when the count of columns changes
             let column: Intersections[] = []
-            intersections.forEach(intersection => {
-                if (intersection.intersectionPoints[col] === undefined) {
+            rowsOfIntersections.forEach((row, i) => {
+                // We've got some intersections so store them into the collection of rows for the current column
+                if (row.intersectionPoints[col]) {
+                    const pair = row.intersectionPoints[col]
+                    column.push({ start: pair.start, end: pair.end, scanline: row.scanline })
+                }
+
+                // We need to start storing into a new column if this column has finished or the next row has a different number of columns
+                const currentColCount = row.intersectionPoints.length
+                const nextColCount = rowsOfIntersections[i + 1] ? rowsOfIntersections[i + 1].intersectionPoints.length : 0
+                if (!row.intersectionPoints[col] || currentColCount !== nextColCount) {
                     if (column.length > 0) {
                         results.push(column)
                         column = []
                     }
-                } else {
-                    const pair = intersection.intersectionPoints[col]
-                    column.push({ start: pair.start, end: pair.end, scanline: intersection.scanline })
                 }
             })
 
+            // We're starting a new column so push any results that haven't been stored so far.
             if (column.length > 0) {
                 results.push(column)
             }
@@ -160,7 +174,7 @@ export class ScanLineService {
         const numLines = bbox.height / separation + 1
         for (let i = 0; i < numLines; ++i) {
             const y = i * separation + bbox.y
-            const line = `M${startX},${y} L${endX},${y}`
+            const line = `M${startX - 1},${y} L${endX + 1},${y}`
             paths.push(line)
         }
 
@@ -176,7 +190,7 @@ export class ScanLineService {
      *
      * This can still have problems with weird intersections but these are harder to detect.
      */
-    private getIntersectionRow(element: SVGPathElement, scanLine: SVGPathElement, separation: number): IntersectionRow | undefined {
+    private getIntersectionRow(element: SVGPathElement, scanLine: SVGPathElement, separation: number): RowOfIntersections | undefined {
         const intersect = this.intersect(this.shape("path", { d: element.getAttribute("d") }), this.shape("path", { d: scanLine.getAttribute("d") })) as Intersect
 
         // TODO handle odd number of intersections and single intersection
@@ -248,7 +262,7 @@ interface IntersectionPair {
     end: Intersection
 }
 
-interface IntersectionRow {
+interface RowOfIntersections {
     intersectionPoints: IntersectionPair[]
     scanline: SVGPathElement
 }

@@ -14,7 +14,7 @@ const Bezier = require("bezier-js")
 })
 export class StitchService {
     // private static readonly ROW_HEIGHT = 0.4
-    private static readonly ROW_HEIGHT = 2
+    private static readonly ROW_HEIGHT = 5
     private static readonly STITCH_LENGTH = 3.5
     private static readonly MIN_STITCH_LENGTH = 1.5
 
@@ -125,8 +125,14 @@ export class StitchService {
 
         // we need to work out over which segments we'll stitch. As this may involving past the start of the curve, we have to use modulo arithmetic
         const segmentIndexes: number[] = []
-        for (let i = from.segmentNumber; i !== to.segmentNumber; i = (i + increment) % shape.elementSegments.length) {
-            segmentIndexes.push(i)
+        let segmentNum = from.segmentNumber
+        while (segmentNum !== to.segmentNumber) {
+            segmentIndexes.push(segmentNum)
+            segmentNum += increment
+            segmentNum = segmentNum % shape.elementSegments.length
+            if (segmentNum < 0) {
+                segmentNum += shape.elementSegments.length
+            }
         }
 
         if (from.segmentNumber !== to.segmentNumber) {
