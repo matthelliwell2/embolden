@@ -4,9 +4,9 @@
 export class Shape {
     /**
      * @param element Element as displayed on the screen
-     * @param elementSegments Elements for each segment of the path. These are not added to the DOM at all
+     * @param pathParts Elements for each segment of the path. These are not added to the DOM at all
      */
-    constructor(public element: SVGPathElement, public elementSegments: SVGPathElement[]) {}
+    constructor(public element: SVGPathElement, public pathParts: PathPart[]) {}
 
     stitches: Point[] = []
     fillType: SatinFillType = SatinFillType.None
@@ -15,6 +15,11 @@ export class Shape {
      * The svg group that contains the lines etc for the display of the stitches.
      */
     stitchGroup: SVGGElement | undefined = undefined
+}
+
+export class PathPart {
+    segment: SVGPathElement
+    subPath: number
 }
 
 /**

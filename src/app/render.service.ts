@@ -50,11 +50,12 @@ export class RenderService {
      * Adds the lines representing the path of the stitching to the group.
      */
     private addStitchLinesToGroup(shape: Shape, renderer: Renderer2): void {
-        const path = this.stitchesToPath(shape.stitches)
-        const element = renderer.createElement("path", "svg") as SVGPathElement
-        element.setAttribute("fill", "none")
-        element.setAttribute("d", path)
-        renderer.appendChild(shape.stitchGroup, element)
+        this.stitchesToPaths(shape.stitches).forEach(path => {
+            const element = renderer.createElement("path", "svg") as SVGPathElement
+            element.setAttribute("fill", "none")
+            element.setAttribute("d", path)
+            renderer.appendChild(shape.stitchGroup, element)
+        })
     }
 
     /**
@@ -75,14 +76,27 @@ export class RenderService {
     /**
      * Converts the stitch coords into an SVG path
      */
-    private stitchesToPath(stitches: Point[]): string {
-        const parts: string[] = []
-        parts.push(`M${stitches[0].x},${stitches[0].y} `)
-        for (let i = 1; i < stitches.length; ++i) {
-            parts.push(`L${stitches[i].x},${stitches[i].y} `)
+    private stitchesToPaths(stitches: Point[]): string[] {
+        const paths: string[] = []
+        let path: string[] = []
+        for (let i = 0; i < stitches.length; ++i) {
+            if (path.length === 0) {
+                path.push(`M${stitches[i].x},${stitches[i].y} `)
+            }
+
+            if (isNaN(stitches[i].x)) {
+                // We need to start a new path
+                paths.push("".concat(...path))
+                path = []
+            } else {
+                path.push(`L${stitches[i].x},${stitches[i].y} `)
+            }
         }
 
-        return "".concat(...parts)
+        if (path.length > 0) {
+            paths.push("".concat(...path))
+        }
+        return paths
     }
 
     /**

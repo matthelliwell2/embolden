@@ -1,5 +1,5 @@
 import { Injectable, Renderer2 } from "@angular/core"
-import { Shape } from "./models"
+import { PathPart, Shape } from "./models"
 import * as svgpath from "svgpath"
 import { PubSubService } from "./pub-sub.service"
 import Point = SvgPanZoom.Point
@@ -24,22 +24,30 @@ export class ShapeService {
     getShape(element: SVGPathElement, renderer: Renderer2): Shape {
         const id = element.getAttribute("id") as string
         if (!this.shapes.has(id)) {
-            const segments = this.getSegmentPaths(element, renderer)
+            const pathParts = this.getPathParts(element, renderer)
 
-            this.shapes.set(id, new Shape(element, segments))
+            this.shapes.set(id, new Shape(element, pathParts))
         }
 
         return this.shapes.get(id)!
     }
 
     onFileLoaded() {
+        // We've loaded a new file so clear down the cache of shapes from the previous file
         this.shapes.clear()
     }
 
-    private getSegmentPaths(element: SVGPathElement, renderer: Renderer2): SVGPathElement[] {
+    /**
+     * This breaks the paths into a series of L and M comnands that makes up the complete path. We'll call these segments.
+     *
+     * In addition the path may be made up of a number of discontiguous parts that are separated by Move commands. We've calls these subpaths. We need to know in which subpath
+     * a segment is in so that we can work out if we can move from one segment to another along the edge of the path.
+     */
+    private getPathParts(element: SVGPathElement, renderer: Renderer2): PathPart[] {
         const path = svgpath(element.getAttribute("d") as string)
-        const segmentElements: SVGPathElement[] = []
-        let firstSegment: Point
+        const pathParts: PathPart[] = []
+        let startOfSubpath: Point
+        let subPathNumber = -1
         let previousSegment: SVGPathElement
         path.iterate(
             (segment, index, x, y): void => {
@@ -47,28 +55,29 @@ export class ShapeService {
                     // To close the path we move from the end of the previous segment to the start of the first segment
                     const len = previousSegment!.getTotalLength()
                     const end = previousSegment!.getPointAtLength(len)
-                    const path = `M${end.x},${end.y}L${firstSegment.x},${firstSegment.y}`
+                    const path = `M${end.x},${end.y}L${startOfSubpath.x},${startOfSubpath.y}`
                     const segmentElement = this.stringToPathElement(path, renderer)
                     this.renderElement(segmentElement, element, renderer)
-                    segmentElements.push(segmentElement)
+                    pathParts.push({ segment: segmentElement, subPath: subPathNumber })
                 } else if (segment[0] !== "M") {
-                    if (!firstSegment) {
-                        firstSegment = { x: x, y: y }
-                    }
-
-                    // Add a move to the start of the segment so it starts from the right place
+                    // We've got an L or C command that forms a segment. Add a move command to the start  of the segment so it starts from the right place
                     const path = `M${x},${y} ${segment.join(" ")}`
 
                     const segmentElement = this.stringToPathElement(path, renderer)
                     this.renderElement(segmentElement, element, renderer)
-                    segmentElements.push(segmentElement)
+                    pathParts.push({ segment: segmentElement, subPath: subPathNumber })
 
                     previousSegment = segmentElement
+                } else if (segment[0] === "M") {
+                    // A series of commands are separated by moves. Keep track of the move at the start of the commands so that if we get a Z command, we can close the path
+                    // path to this point.
+                    startOfSubpath = { x: segment[1], y: segment[2] }
+                    ++subPathNumber
                 }
             }
         )
 
-        return segmentElements
+        return pathParts
     }
 
     /**

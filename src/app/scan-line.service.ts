@@ -64,10 +64,10 @@ export class ScanLineService {
     }
 
     private calcuateDistanceAlongElementPath(shape: Shape, intersection: Intersection) {
-        const segmentNumber = Lib.findElementIndexForPoint(shape.elementSegments, intersection.point)
+        const segmentNumber = Lib.findElementIndexForPoint(shape.pathParts.map(part => part.segment), intersection.point)
         intersection.segmentNumber = segmentNumber
 
-        intersection.segmentTValue = Lib.calculateTValueForPoint(shape.elementSegments[segmentNumber], intersection.point)
+        intersection.segmentTValue = Lib.calculateTValueForPoint(shape.pathParts[segmentNumber].segment, intersection.point)
     }
 
     private calculateDistancesAlongScanlinePath = (intersections: RowOfIntersections): RowOfIntersections => {
