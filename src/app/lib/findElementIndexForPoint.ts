@@ -1,62 +1,50 @@
-/**
- * Given a list of paths, this finds the element on which the point lies. It calculates this using the bounding box for each path and therefore only works with simple paths.
- */
 import { Point } from "../models"
+import { getControlPointsFromPath } from "./getControlPointsFromPath"
 
+const Bezier = require("bezier-js")
+
+/**
+ * Given a list of paths, this finds the element on which the point lies. It calculates this by projecting the point onto the curve and finding how far the point is from the
+ * projection point. It returns the index number of the closest element.
+ */
 export const findElementIndexForPoint = (elements: SVGPathElement[], point: Point): number => {
-    const matches = elements
-        .map((element, i) => {
-            return { element: element, index: i }
-        })
-        .filter(element => pointInBBox(point, element.element))
-        .reduce(smallestBoundingBox, undefined)
+    let closestDistance = Infinity
+    let closestIndex = -1
+    for (let i = 0; i < elements.length; ++i) {
+        const coords: Point[] = getControlPointsFromPath(elements[i])
+        let projection: Point
+        if (coords.length == 4) {
+            const b = new Bezier(coords)
+            projection = b.project(point) as Point
+        } else if (coords.length === 2) {
+            projection = pointLineIntersection(point.x, point.y, coords[0].x, coords[0].y, coords[1].x, coords[1].y)
+        } else {
+            throw new Error("Unknown path type")
+        }
 
-    if (matches) {
-        return matches.index
-    } else {
-        throw new Error(`No matching element found for point ${point}`)
-    }
-}
-
-const smallestBoundingBox = (a: ElementWithIndex | undefined, b: ElementWithIndex): ElementWithIndex | undefined => {
-    if (!a) {
-        return b
-    }
-
-    const areaA = a.element.getBBox().width * a.element.getBBox().height
-    const areaB = b.element.getBBox().width * b.element.getBBox().height
-
-    return areaA <= areaB ? a : b
-}
-
-const pointInBBox = (point: Point, element: SVGPathElement): boolean => {
-    const bbox = element.getBBox()
-
-    // Due to rounding we need to expand the box a bit
-    const expandBy = 0.01
-    if (bbox.width < 1) {
-        bbox.x = bbox.x - expandBy
-        bbox.width = bbox.width + expandBy * 2
+        const distance = distanceBetweenPoints(point, projection)
+        if (distance < closestDistance) {
+            closestDistance = distance
+            closestIndex = i
+        }
     }
 
-    if (bbox.height < 1) {
-        bbox.y = bbox.y - expandBy
-        bbox.height = bbox.height + expandBy * 2
-    }
-
-    return (
-        roundTo3DP(point.x) >= roundTo3DP(bbox.x) &&
-        roundTo3DP(point.x) <= roundTo3DP(bbox.x + bbox.width) &&
-        roundTo3DP(point.y) >= roundTo3DP(bbox.y) &&
-        roundTo3DP(point.y) <= roundTo3DP(bbox.y + bbox.height)
-    )
+    console.log("Closest distance", closestDistance)
+    return closestIndex
 }
 
-const roundTo3DP = (n: number): number => {
-    return Math.round(n * 1000) / 1000
+const distanceBetweenPoints = (p1: Point, p2: Point): number => {
+    const x = p1.x - p2.x
+    const y = p1.y - p2.y
+    return Math.sqrt(x * x + y * y)
 }
 
-interface ElementWithIndex {
-    element: SVGPathElement
-    index: number
+// From http://jsfromhell.com/math/dot-line-intersection
+const pointLineIntersection = (x, y, x0, y0, x1, y1): Point => {
+    if (!(x1 - x0)) return { x: x0, y: y }
+    else if (!(y1 - y0)) return { x: x, y: y0 }
+
+    let left,
+        tg = -1 / ((y1 - y0) / (x1 - x0))
+    return { x: left = (x1 * (x * tg - y + y0) + x0 * (x * -tg + y - y1)) / (tg * (x1 - x0) + y0 - y1), y: tg * left - tg * x + y }
 }
