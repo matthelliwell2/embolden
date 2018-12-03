@@ -14,7 +14,7 @@ const Bezier = require("bezier-js")
 })
 export class StitchService {
     // private static readonly ROW_HEIGHT = 0.4
-    private static readonly ROW_HEIGHT = 5
+    private static readonly ROW_HEIGHT = 2.5
     private static readonly STITCH_LENGTH = 3.5
     private static readonly MIN_STITCH_LENGTH = 1.5
 
@@ -51,7 +51,7 @@ export class StitchService {
         const minStitchLength = StitchService.MIN_STITCH_LENGTH * scaling
 
         let previousColumnOfScanLines: Intersections[] | undefined = undefined
-        // let count = 0
+        let count = 0
         allScanLines.forEach(columnOfScanLines => {
             const stitchesForColumn = this.generateStitchesForScanLines(shape, columnOfScanLines, stitchLength, minStitchLength)
 
@@ -77,8 +77,10 @@ export class StitchService {
             }
 
             allStitches.push(...stitchesForColumn)
-            // ++count
+            ++count
         })
+
+        console.log("Num columns", count)
 
         shape.stitches = allStitches
     }
@@ -87,6 +89,7 @@ export class StitchService {
      * Generates stitches for a single column of scan lines.
      */
     private generateStitchesForScanLines(shape: Shape, scanLines: Intersections[], stitchLength: number, minStitchLength: number): Point[] {
+        let count = 0
         const allStitches: Point[] = []
         let forwards = true
         let previousScanline: Intersections | undefined
@@ -104,12 +107,14 @@ export class StitchService {
 
             if (stitches.length > 0) {
                 allStitches.push(...stitches)
+                previousScanline = scanLine
             }
 
             forwards = !forwards
-            previousScanline = scanLine
+            ++count
         })
 
+        console.log("scan lines = ", count)
         return allStitches
     }
 

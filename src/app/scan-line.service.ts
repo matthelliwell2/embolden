@@ -28,11 +28,11 @@ export class ScanLineService {
             .map(path => this.stringToSVGElement(path, renderer, shape.element))
             .map(scanLine => this.getIntersectionRow(shape.element, scanLine, scanLineSeparation))
             .filter(intersectionRow => intersectionRow !== undefined)
-            .map(intersectionRow => this.removeSmallStitches(intersectionRow!, minStitchLength))
-            .map(intersectionRow => this.calculateDistancesAlongElementPath(shape, intersectionRow))
+            .map(intersectionRow => this.calculateDistancesAlongElementPath(shape, intersectionRow!))
             .map(intersectionRow => this.calculateDistancesAlongScanlinePath(intersectionRow))
+            .map(intersectionRow => this.removeSmallStitches(intersectionRow!, minStitchLength))
+            .filter(i => i.intersectionPoints.length > 0)
 
-        intersections.filter(i => i.intersectionPoints.length > 0)
         return this.sortIntoColumns(intersections)
     }
 
@@ -40,14 +40,8 @@ export class ScanLineService {
      * If the start and end point are too close together remove them as we can't stitch them together
      */
     private removeSmallStitches(row: RowOfIntersections, minStitchLength: number): RowOfIntersections {
-        row.intersectionPoints.filter(pair => this.distanceBetweenPoints(pair.start.point, pair.end.point) >= minStitchLength)
+        row.intersectionPoints = row.intersectionPoints.filter(pair => Math.abs(pair.start.scanlineDistance - pair.end.scanlineDistance) >= minStitchLength)
         return row
-    }
-
-    private distanceBetweenPoints(p1: Point, p2: Point): number {
-        const x = p1.x - p2.x
-        const y = p1.y - p2.y
-        return Math.sqrt(x * x + y * y)
     }
 
     /**
