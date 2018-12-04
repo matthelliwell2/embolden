@@ -29,7 +29,6 @@ export const findElementIndexForPoint = (elements: SVGPathElement[], point: Poin
         }
     }
 
-    console.log("Closest distance", closestDistance)
     return closestIndex
 }
 

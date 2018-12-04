@@ -52,6 +52,7 @@ export class StitchService {
 
         let previousColumnOfScanLines: Intersections[] | undefined = undefined
         let count = 0
+        // const x = 3
         allScanLines.forEach(columnOfScanLines => {
             const stitchesForColumn = this.generateStitchesForScanLines(shape, columnOfScanLines, stitchLength, minStitchLength)
 
@@ -65,18 +66,22 @@ export class StitchService {
                 }
 
                 const to = columnOfScanLines[0].start
+                // if (count === x + 1) {
                 const joinStitches = this.generateStitchesAlongShape(shape, from, to, minStitchLength)
                 if (joinStitches.length > 0) {
                     console.log("join stitches:", joinStitches.length)
                     allStitches.push(...joinStitches)
                 }
+                // }
             }
 
             if (stitchesForColumn.length > 0) {
                 previousColumnOfScanLines = columnOfScanLines
             }
 
+            // if (count === x || count === x + 1) {
             allStitches.push(...stitchesForColumn)
+            // }
             ++count
         })
 
@@ -89,7 +94,6 @@ export class StitchService {
      * Generates stitches for a single column of scan lines.
      */
     private generateStitchesForScanLines(shape: Shape, scanLines: Intersections[], stitchLength: number, minStitchLength: number): Point[] {
-        let count = 0
         const allStitches: Point[] = []
         let forwards = true
         let previousScanline: Intersections | undefined
@@ -111,10 +115,8 @@ export class StitchService {
             }
 
             forwards = !forwards
-            ++count
         })
 
-        console.log("scan lines = ", count)
         return allStitches
     }
 
@@ -141,11 +143,15 @@ export class StitchService {
         const forward = forwardDistance <= backwardDistance
         const increment = forward ? 1 : -1
 
-        // we need to work out over which segments we'll stitch. As this may involving past the start of the curve, we have to use modulo arithmetic
+        // we need to work out over which segments we'll stitch. As this may involving past the start of the curve, we have to use modulo arithmetic.
+        const subpath = shape.pathParts[from.segmentNumber].subPath
         const segmentIndexes: number[] = []
         let segmentNum = from.segmentNumber
         do {
-            segmentIndexes.push(segmentNum)
+            // We need to make sure that we only go over segments on the same subpath
+            if (shape.pathParts[segmentNum].subPath === subpath) {
+                segmentIndexes.push(segmentNum)
+            }
             if (segmentNum === to.segmentNumber) {
                 break
             }
@@ -208,8 +214,8 @@ export class StitchService {
         }
     }
 
-    private generateStitchesAlongElement(element: SVGPathElement, from: number, to: number, stitchLength: number): Point[] {
-        const distance = element.getTotalLength() * Math.abs(from - to)
+    private generateStitchesAlongElement(element: SVGPathElement, fromTValue: number, toTValue: number, stitchLength: number): Point[] {
+        const distance = element.getTotalLength() * Math.abs(fromTValue - toTValue)
         const numStitches = Math.round(distance / stitchLength) + 1
         if (numStitches < 2) {
             return []
@@ -221,20 +227,20 @@ export class StitchService {
             const b = new Bezier(coords)
 
             for (let i = 0; i < numStitches; ++i) {
-                if (from < to) {
+                if (fromTValue < toTValue) {
                     // forwards
-                    const fraction = ((to - from) / (numStitches - 1)) * i
-                    stitches.push(b.compute(from + fraction))
+                    const fraction = ((toTValue - fromTValue) / (numStitches - 1)) * i
+                    stitches.push(b.compute(fromTValue + fraction))
                 } else {
                     // backwards
-                    const fraction = ((from - to) / (numStitches - 1)) * i
-                    stitches.push(b.compute(from - fraction))
+                    const fraction = ((fromTValue - toTValue) / (numStitches - 1)) * i
+                    stitches.push(b.compute(fromTValue - fraction))
                 }
             }
         } else if (coords.length === 2) {
             for (let i = 0; i < numStitches; ++i) {
-                const fraction = ((to - from) / (numStitches - 1)) * i
-                if (from < to) {
+                const fraction = ((toTValue - fromTValue) / (numStitches - 1)) * i
+                if (fromTValue < toTValue) {
                     stitches.push({ x: coords[0].x + (coords[1].x - coords[0].x) * fraction, y: coords[0].y + (coords[1].y - coords[0].y) * fraction })
                 } else {
                     stitches.push({ x: coords[1].x + (coords[1].x - coords[0].x) * fraction, y: coords[1].y + (coords[1].y - coords[0].y) * fraction })
