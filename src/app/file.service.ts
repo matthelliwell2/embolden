@@ -7,6 +7,14 @@ import * as svgpath from "svgpath"
 const transform = require("svg-flatten/src/transform.js")
 const pathify = require("svg-flatten/src/pathify.js")
 
+// Nasty shim to get xmldoc.toString to work. Needs moving to polyfills.ts
+Object.defineProperty(Array.prototype, "toStringWithIndent", {
+    value: function(indent, options) {
+        const s = this.map(e => e.toStringWithIndent(indent, options))
+        return s.concat()
+    }
+})
+
 /**
  *  * This contains methods related to manipulating external files
  */
@@ -53,7 +61,8 @@ export class FileService {
                 xmlContents = flatten(xmlContents) as xmldoc.XmlElement
                 xmlContents = transform(xmlContents)
 
-                container.nativeElement.innerHTML = xmlContents.toString()
+                // container.nativeElement.innerHTML = xmlContents.toString()
+                container.nativeElement.innerHTML = xmlContents
 
                 const svg = Array.from<Node>(container.nativeElement.childNodes).filter(node => node.nodeName === "svg")
                 this.adjustForIntersectionLibrary(svg[0])
@@ -177,7 +186,7 @@ const flattenGroup = (group: xmldoc.XmlElement): xmldoc.XmlElement[] => {
     return group.children.map(child => {
         const flatChild = transform(flatten(child as xmldoc.XmlElement))
 
-        if (groupTransform) {
+        if (groupTransform && flatChild.hasOwnProperty("attr")) {
             flatChild.attr.transform = groupTransform
         }
 

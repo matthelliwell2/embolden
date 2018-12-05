@@ -15,11 +15,18 @@ export const calculateTValueForPoint = (element: SVGPathElement, point: Point): 
         return b.project(point).t!
     } else if (coords.length === 2) {
         // We've got a line so we can do the calculation here.
-        const t = (point.x - coords[0].x) / (coords[1].x - coords[0].x)
-        if (!isFinite(t) || isNaN(t)) {
-            return (point.y - coords[0].y) / (coords[1].y - coords[0].y)
+        const tx = (point.x - coords[0].x) / (coords[1].x - coords[0].x)
+        if (!isFinite(tx) || isNaN(tx)) {
+            const ty = (point.y - coords[0].y) / (coords[1].y - coords[0].y)
+            if (ty > 1) {
+                throw new Error("t value > 1)")
+            }
+            return ty
         } else {
-            return t
+            if (tx > 1) {
+                throw new Error("t value > 1)")
+            }
+            return tx
         }
     } else {
         throw new Error(`Unsupport path ${element.getAttribute("d")}`)

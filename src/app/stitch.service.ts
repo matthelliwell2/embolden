@@ -2,6 +2,7 @@ import { Injectable, Renderer2 } from "@angular/core"
 import { ScanLineService } from "./scan-line.service"
 import { Intersection, Intersections, Point, SatinFillType, Shape } from "./models"
 import * as Lib from "./lib/lib"
+import { OptimiserService } from "./optimiser.service"
 
 const Bezier = require("bezier-js")
 
@@ -18,7 +19,7 @@ export class StitchService {
     private static readonly STITCH_LENGTH = 3.5
     private static readonly MIN_STITCH_LENGTH = 1.5
 
-    constructor(private scanLineService: ScanLineService) {}
+    constructor(private scanLineService: ScanLineService, private optimiserService: OptimiserService) {}
 
     fill(shape: Shape, scaling: number, renderer: Renderer2): void {
         if (shape.fillType === SatinFillType.None) {
@@ -29,6 +30,7 @@ export class StitchService {
         this.closePath(shape.element)
 
         const scanLines = this.scanLineService.generateScanLines(StitchService.ROW_HEIGHT, shape, scaling, renderer, StitchService.MIN_STITCH_LENGTH)
+        this.optimiserService.optimise(scanLines)
 
         this.generateStitches(shape, scanLines, scaling)
 
@@ -52,18 +54,13 @@ export class StitchService {
 
         let previousColumnOfScanLines: Intersections[] | undefined = undefined
         let count = 0
-        // const x = 3
+        // const x = 11
         allScanLines.forEach(columnOfScanLines => {
             const stitchesForColumn = this.generateStitchesForScanLines(shape, columnOfScanLines, stitchLength, minStitchLength)
 
             // Generate stitches from the end of the last column to the start of this column
             if (previousColumnOfScanLines !== undefined && previousColumnOfScanLines!.length > 0 && stitchesForColumn.length > 0) {
-                let from: Intersection
-                if (previousColumnOfScanLines.length % 2 === 0) {
-                    from = previousColumnOfScanLines[previousColumnOfScanLines!.length - 1].start
-                } else {
-                    from = previousColumnOfScanLines[previousColumnOfScanLines!.length - 1].end
-                }
+                const from: Intersection = previousColumnOfScanLines[previousColumnOfScanLines!.length - 1].end
 
                 const to = columnOfScanLines[0].start
                 // if (count === x + 1) {
@@ -79,7 +76,7 @@ export class StitchService {
                 previousColumnOfScanLines = columnOfScanLines
             }
 
-            // if (count === x || count === x + 1) {
+            // if (count === x +1) {
             allStitches.push(...stitchesForColumn)
             // }
             ++count
@@ -95,26 +92,19 @@ export class StitchService {
      */
     private generateStitchesForScanLines(shape: Shape, scanLines: Intersections[], stitchLength: number, minStitchLength: number): Point[] {
         const allStitches: Point[] = []
-        let forwards = true
         let previousScanline: Intersections | undefined
         scanLines.forEach(scanLine => {
             if (previousScanline) {
-                if (forwards) {
-                    allStitches.push(...this.generateStitchesAlongShape(shape, previousScanline.start, scanLine.start, stitchLength))
-                } else {
-                    allStitches.push(...this.generateStitchesAlongShape(shape, previousScanline.end, scanLine.end, stitchLength))
-                }
+                allStitches.push(...this.generateStitchesAlongShape(shape, previousScanline.end, scanLine.start, stitchLength))
             }
 
             // Generate stitches along the scan line
-            const stitches = this.generateStitchesForScanLine(scanLine, forwards, stitchLength, minStitchLength)
+            const stitches = this.generateStitchesForScanLine(scanLine, stitchLength, minStitchLength)
 
             if (stitches.length > 0) {
                 allStitches.push(...stitches)
                 previousScanline = scanLine
             }
-
-            forwards = !forwards
         })
 
         return allStitches
@@ -256,21 +246,14 @@ export class StitchService {
     /**
      * Generates stitches between any two points. It will generate stitches all of the same length.
      * @param scanLine The line of stitches
-     * @param forwards Whether we stitch start to end or end to start
      * @param stitchLength Length of stitches
+     * @param minStitchLength Min stitch length. If scanline is shorter than this no stitches wil be generated. However these short scanline should've been filtered out already
      */
-    private generateStitchesForScanLine(scanLine: Intersections, forwards: boolean, stitchLength: number, minStitchLength: number): Point[] {
+    private generateStitchesForScanLine(scanLine: Intersections, stitchLength: number, minStitchLength: number): Point[] {
         const results: Point[] = []
 
-        let start: Intersection
-        let end: Intersection
-        if (forwards) {
-            start = scanLine.start
-            end = scanLine.end
-        } else {
-            start = scanLine.end
-            end = scanLine.start
-        }
+        const start = scanLine.start
+        const end = scanLine.end
 
         const totalLength = end.scanlineDistance - start.scanlineDistance
 

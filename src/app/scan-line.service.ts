@@ -19,9 +19,9 @@ export class ScanLineService {
      * This generates a series of horizontal lines that run the width of the shape. Each line is referred to as a scan line.
      * The scan lines are defined as parths so that in the future we can generalise this and make them curved paths etc.
      */
-    generateScanLines(heightMM: number, shape: Shape, scaling: number, renderer: Renderer2, minStitchLength: number): Intersections[][] {
+    generateScanLines(heightMM: number, shape: Shape, scaling: number, renderer: Renderer2, minStitchLengthMM: number): Intersections[][] {
         const elementBBox = shape.element.getBBox()
-
+        const minStitchLength = minStitchLengthMM * scaling
         const scanLineSeparation = this.calculateLineSeparation(elementBBox, heightMM * scaling)
 
         const intersections = this.generateFullWidthScanLinePaths(scanLineSeparation, elementBBox)
