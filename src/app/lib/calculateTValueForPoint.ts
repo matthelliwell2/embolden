@@ -19,11 +19,13 @@ export const calculateTValueForPoint = (element: SVGPathElement, point: Point): 
         if (!isFinite(tx) || isNaN(tx)) {
             const ty = (point.y - coords[0].y) / (coords[1].y - coords[0].y)
             if (ty > 1) {
+                console.log("t value", ty)
                 throw new Error("t value > 1)")
             }
             return ty
         } else {
             if (tx > 1) {
+                console.log("t value", tx)
                 throw new Error("t value > 1)")
             }
             return tx

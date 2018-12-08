@@ -15,7 +15,7 @@ const Bezier = require("bezier-js")
 })
 export class StitchService {
     // private static readonly ROW_HEIGHT = 0.4
-    private static readonly ROW_HEIGHT = 2.5
+    private static readonly ROW_HEIGHT = 4.3
     private static readonly STITCH_LENGTH = 3.5
     private static readonly MIN_STITCH_LENGTH = 1.5
 
@@ -258,7 +258,7 @@ export class StitchService {
         const totalLength = end.scanlineDistance - start.scanlineDistance
 
         if (Math.abs(totalLength) <= stitchLength) {
-            if (totalLength >= minStitchLength) {
+            if (Math.abs(totalLength) >= minStitchLength) {
                 results.push(start.point)
                 results.push(end.point)
             }

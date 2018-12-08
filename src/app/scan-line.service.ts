@@ -26,8 +26,8 @@ export class ScanLineService {
 
         const intersections = this.generateFullWidthScanLinePaths(scanLineSeparation, elementBBox)
             .map(path => this.stringToSVGElement(path, renderer, shape.element))
-            .map(scanLine => this.getIntersectionRow(shape.element, scanLine, scanLineSeparation))
-            .filter(intersectionRow => intersectionRow !== undefined)
+            .map(scanLine => this.getIntersectionRow(shape, scanLine, scanLineSeparation))
+            .filter(intersectionRow => intersectionRow.intersectionPoints.length !== 0)
             .map(intersectionRow => this.calculateDistancesAlongElementPath(shape, intersectionRow!))
             .map(intersectionRow => this.calculateDistancesAlongScanlinePath(intersectionRow))
             .map(intersectionRow => this.removeSmallStitches(intersectionRow!, minStitchLength))
@@ -58,10 +58,7 @@ export class ScanLineService {
     }
 
     private calcuateDistanceAlongElementPath(shape: Shape, intersection: Intersection) {
-        const segmentNumber = Lib.findElementIndexForPoint(shape.pathParts.map(part => part.segment), intersection.point)
-        intersection.segmentNumber = segmentNumber
-
-        intersection.segmentTValue = Lib.calculateTValueForPoint(shape.pathParts[segmentNumber].segment, intersection.point)
+        intersection.segmentTValue = Lib.calculateTValueForPoint(shape.pathParts[intersection.segmentNumber].segment, intersection.point)
     }
 
     private calculateDistancesAlongScanlinePath = (intersections: RowOfIntersections): RowOfIntersections => {
@@ -184,25 +181,41 @@ export class ScanLineService {
      *
      * This can still have problems with weird intersections but these are harder to detect.
      */
-    private getIntersectionRow(element: SVGPathElement, scanLine: SVGPathElement, separation: number): RowOfIntersections | undefined {
-        const intersect = this.intersect(this.shape("path", { d: element.getAttribute("d") }), this.shape("path", { d: scanLine.getAttribute("d") })) as Intersect
+    private getIntersectionRow(shape: Shape, scanLine: SVGPathElement, separation: number): RowOfIntersections {
+        type IntersectResult = { point: Point; segmentNumber: number }
 
-        // TODO handle odd number of intersections and single intersection
-        if (intersect.points.length % 2 !== 0) {
+        let intersects = shape.pathParts
+            .map(part => part.segment)
+            .map((segment, i) => {
+                // Find the intersection between the path segment and the scanline. This lets us track the segment number of the intersection.
+                const intersect = this.intersect(this.shape("path", { d: segment.getAttribute("d") }), this.shape("path", { d: scanLine.getAttribute("d") })) as Intersect
+                return { points: intersect.points, segmentNumber: i }
+            })
+
+            // If we didn't get any intersections, throw away the results
+            .filter(intersect => intersect.points.length > 0)
+
+            // Flatten the arrays of points in a single array of points, each with the segment number
+            .reduce(
+                (acc, intersect) => {
+                    intersect.points.forEach(point => acc.push({ point: point, segmentNumber: intersect.segmentNumber }))
+                    return acc
+                },
+                [] as IntersectResult[]
+            )
+
+            // Sort by increasing x as the intersections will be in an unknown order otherwise
+            .sort((a, b) => a.point.x - b.point.x)
+
+        if (intersects.length % 2 !== 0) {
             console.log("TODO odd number of intersections")
-            intersect.points = intersect.points.slice(0, intersect.points.length - 1)
+            intersects = intersects.slice(0, intersects.length - 1)
         }
-
-        if (intersect.points.length === 0) {
-            return undefined
-        }
-
-        intersect.points = intersect.points.sort((p1, p2) => p1.x - p2.x)
 
         const intersections: IntersectionPair[] = []
-        for (let i = 0; i < intersect.points.length; i += 2) {
-            const start: Intersection = { point: intersect.points[i], scanlineDistance: -1, segmentNumber: -1, segmentTValue: -1 }
-            const end: Intersection = { point: intersect.points[i + 1], scanlineDistance: -1, segmentNumber: -1, segmentTValue: -1 }
+        for (let i = 0; i < intersects.length; i += 2) {
+            const start: Intersection = { point: intersects[i].point, scanlineDistance: -1, segmentNumber: intersects[i].segmentNumber, segmentTValue: -1 }
+            const end: Intersection = { point: intersects[i + 1].point, scanlineDistance: -1, segmentNumber: intersects[i + 1].segmentNumber, segmentTValue: -1 }
             intersections.push({ start: start, end: end })
         }
 
