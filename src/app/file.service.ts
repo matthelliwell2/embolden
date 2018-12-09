@@ -65,16 +65,30 @@ export class FileService {
                 container.nativeElement.innerHTML = xmlContents
 
                 const svg = Array.from<Node>(container.nativeElement.childNodes).filter(node => node.nodeName === "svg")
-                this.adjustForIntersectionLibrary(svg[0])
-
                 if (svg.length !== 1) {
-                    console.log("Unable to find root svg element")
+                    throw new Error("Unable to find root svg element")
                 }
-                resolve(svg[0] as SVGSVGElement)
+
+                const svgElement = svg[0] as SVGSVGElement
+
+                this.adjustForIntersectionLibrary(svgElement)
+                this.deleteCssDefs(svgElement)
+
+                resolve(svgElement)
             }
 
             r.readAsText(file)
         })
+    }
+
+    private deleteCssDefs(svg: SVGSVGElement): void {
+        const defs = svg.querySelector("defs")
+        if (defs) {
+            const style = defs.querySelector('style[type="text/css"]')
+            if (style) {
+                defs.removeChild(style)
+            }
+        }
     }
 
     /**
@@ -82,7 +96,7 @@ export class FileService {
      * 1. svg-intersections doesn't support the 'h' command for some reason so convert to absoluate coords
      * 2. svg-intersections sometimes misses out intersections for paths contains H and V commands so convert these to L
      */
-    private adjustForIntersectionLibrary(node: Node) {
+    private adjustForIntersectionLibrary(node: Node): void {
         if (node instanceof SVGElement && node.nodeName === "path") {
             let path = svgpath(node.getAttribute("d") as string).abs()
 
