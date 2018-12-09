@@ -32,6 +32,17 @@ export class ShapeService {
         return this.shapes.get(id)!
     }
 
+    /**
+     * Make's sure that the path is closed otherwise it can't be filled properly. We don't do this when we load the file as we might not be filling the shape
+     */
+    closePath(shape: Shape, renderer: Renderer2) {
+        const path = shape.element.getAttribute("d")!.trim()
+        if (!path.endsWith("Z") && !path.endsWith("z")) {
+            shape.element.setAttribute("d", path + "Z")
+            shape.pathParts = this.getPathParts(shape.element, renderer)
+        }
+    }
+
     onFileLoaded() {
         // We've loaded a new file so clear down the cache of shapes from the previous file
         this.shapes.clear()

@@ -61,15 +61,17 @@ export class FileService {
                 xmlContents = flatten(xmlContents) as xmldoc.XmlElement
                 xmlContents = transform(xmlContents)
 
-                // container.nativeElement.innerHTML = xmlContents.toString()
                 container.nativeElement.innerHTML = xmlContents
 
                 const svg = Array.from<Node>(container.nativeElement.childNodes).filter(node => node.nodeName === "svg")
-                this.adjustForIntersectionLibrary(svg[0])
 
                 if (svg.length !== 1) {
                     console.log("Unable to find root svg element")
                 }
+
+                this.adjustForIntersectionLibrary(svg[0])
+                this.splitDiscontiguousPaths(svg[0])
+
                 resolve(svg[0] as SVGSVGElement)
             }
 
@@ -108,6 +110,29 @@ export class FileService {
         }
 
         node.childNodes.forEach(node => this.adjustForIntersectionLibrary(node))
+    }
+
+    private splitDiscontiguousPaths(node: Node) {
+        if (node instanceof SVGPathElement) {
+            const subpaths = node
+                .getAttribute("d")!
+                .split("M")
+                .filter(subpath => subpath.length > 0)
+                .map(subpath => "M" + subpath)
+            if (subpaths.length > 1) {
+                node.setAttribute("d", subpaths[0])
+
+                subpaths.slice(1).forEach(subpath => {
+                    const clone = node.cloneNode(false) as SVGElement
+                    clone.setAttribute("d", subpath)
+                    node.parentNode!.appendChild(clone)
+                })
+
+                node.cloneNode()
+            }
+        }
+
+        node.childNodes.forEach(node => this.splitDiscontiguousPaths(node))
     }
 
     /**
