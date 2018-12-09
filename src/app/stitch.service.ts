@@ -3,7 +3,6 @@ import { ScanLineService } from "./scan-line.service"
 import { Intersection, Intersections, Point, SatinFillType, Shape } from "./models"
 import * as Lib from "./lib/lib"
 import { OptimiserService } from "./optimiser.service"
-import { ShapeService } from "./shape.service"
 
 const Bezier = require("bezier-js")
 
@@ -16,11 +15,11 @@ const Bezier = require("bezier-js")
 })
 export class StitchService {
     // private static readonly ROW_HEIGHT = 0.4
-    private static readonly ROW_HEIGHT = 2.5
+    private static readonly ROW_HEIGHT = 4.3
     private static readonly STITCH_LENGTH = 3.5
     private static readonly MIN_STITCH_LENGTH = 1.5
 
-    constructor(private scanLineService: ScanLineService, private optimiserService: OptimiserService, private shapeService: ShapeService) {}
+    constructor(private scanLineService: ScanLineService, private optimiserService: OptimiserService) {}
 
     fill(shape: Shape, scaling: number, renderer: Renderer2): void {
         if (shape.fillType === SatinFillType.None) {
@@ -28,7 +27,7 @@ export class StitchService {
             return
         }
 
-        this.shapeService.closePath(shape, renderer)
+        this.closePath(shape.element)
 
         const scanLines = this.scanLineService.generateScanLines(StitchService.ROW_HEIGHT, shape, scaling, renderer, StitchService.MIN_STITCH_LENGTH)
         this.optimiserService.optimise(scanLines)
@@ -36,6 +35,16 @@ export class StitchService {
         this.generateStitches(shape, scanLines, scaling)
 
         console.log("Num stitches =", shape.stitches.length)
+    }
+
+    /**
+     * Make's sure that the path is closed otherwise it can't be filled properly. We don't do this when we load the file as we might not be filling the shape
+     */
+    private closePath(element: SVGPathElement) {
+        const path = element.getAttribute("d")!.trim()
+        if (!path.endsWith("Z") && !path.endsWith("z")) {
+            element.setAttribute("d", path + "Z")
+        }
     }
 
     private generateStitches(shape: Shape, allScanLines: Intersections[][], scaling: number) {
