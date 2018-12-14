@@ -19,3 +19,14 @@
     vector-effect: non-scaling-stroke;
     fill-opacity: 0;
 }
+
+.stitchablePath {
+    marker-mid: url(#markerArrow);
+}
+
+.marker {
+    stroke: #0000ee;
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+    fill: none;
+}

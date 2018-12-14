@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, Renderer2 } from "@angular/core"
+import { Component, OnDestroy, OnInit } from "@angular/core"
 import { SatinFillType, Shape } from "../models"
 import { PubSubService } from "../pub-sub.service"
 import { ShapeService } from "../shape.service"
@@ -15,13 +15,7 @@ export class StitchControlComponent implements OnInit, OnDestroy {
     selectedShape: Shape | undefined = undefined
     scaling: number
 
-    constructor(
-        private pubSubService: PubSubService,
-        private stitchService: StitchService,
-        private shapeService: ShapeService,
-        private renderer: Renderer2,
-        private renderService: RenderService
-    ) {}
+    constructor(private pubSubService: PubSubService, private stitchService: StitchService, private shapeService: ShapeService, private renderService: RenderService) {}
 
     ngOnInit() {
         this.pubSubService.subscribe(this)
@@ -31,19 +25,18 @@ export class StitchControlComponent implements OnInit, OnDestroy {
         this.pubSubService.unsubscribe(this)
     }
 
-    onFileLoaded(file: { svg: SVGSVGElement; scaling: number }) {
-        this.scaling = file.scaling
+    onFileLoaded() {
         this.selectedShape = undefined
     }
 
     onFillTypeSelected(type: string) {
         this.selectedShape!.fillType = SatinFillType[type]
-        this.stitchService.fill(this.selectedShape!, this.scaling, this.renderer)
-        this.renderService.render(this.selectedShape!, this.scaling, this.renderer)
+        this.stitchService.fill(this.selectedShape!)
+        this.renderService.render(this.selectedShape!)
     }
 
     onElementSelected(element: SVGPathElement) {
-        this.selectedShape = this.shapeService.getShape(element, this.renderer)
+        this.selectedShape = this.shapeService.getShape(element)
     }
 
     onElementDeselected() {

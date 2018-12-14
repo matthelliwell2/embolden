@@ -1,6 +1,7 @@
-import { Injectable, Renderer2 } from "@angular/core"
+import { Injectable, Renderer2, RendererFactory2 } from "@angular/core"
 import { Point, SatinFillType, Shape } from "./models"
 import { SettingsService } from "./settings.service"
+import { PubSubService } from "./pub-sub.service"
 
 /**
  * This is responsible for rendering an image of the stitches onto the screen
@@ -9,68 +10,104 @@ import { SettingsService } from "./settings.service"
     providedIn: "root"
 })
 export class RenderService {
-    constructor(private settingsService: SettingsService) {}
+    private stitchGroup: SVGGElement
+    private scaling: number
+    private renderer: Renderer2
+
+    constructor(private settingsService: SettingsService, private pubSubService: PubSubService, rendererFactory: RendererFactory2) {
+        this.renderer = rendererFactory.createRenderer(null, null)
+        this.pubSubService.subscribe(this)
+    }
+
+    onFileLoaded(file: { svg: SVGSVGElement; scaling: number }) {
+        this.scaling = file.scaling
+        this.deleteCssDefs(file.svg)
+        this.deleteMarkerDefs(file.svg)
+        this.addMarkers(file.svg)
+
+        this.createStitchGroup(file.svg)
+    }
 
     /**
      * Draws the stitches for an element.
      */
-    render(shape: Shape, scaling: number, renderer: Renderer2): void {
-        const strokeWidth = this.settingsService.renderSettings.renderValues.strokeWidth * scaling
-
-        this.createStitchGroup(shape, strokeWidth, renderer)
-
+    render(shape: Shape): void {
         if (shape.fillType !== SatinFillType.None) {
-            this.addStitchLinesToGroup(shape, renderer)
-            // this.addStitchCirclesToGroup(shape, renderer, scaling)
+            this.addStitchLinesToGroup(shape)
+        }
+    }
+
+    private addMarkers(svg: SVGSVGElement): void {
+        let defs = svg.querySelector("defs")
+        if (!defs) {
+            const defsElement = this.renderer.createElement("defs", "svg")
+            svg.appendChild(defsElement)
+            defs = svg.querySelector("defs")!
+        }
+
+        const markerArrow = this.renderer.createElement("marker", "svg")
+        markerArrow.setAttribute("id", "markerArrow")
+        markerArrow.setAttribute("markerWidth", `${1 * this.scaling}`)
+        markerArrow.setAttribute("markerHeight", `${1 * this.scaling}`)
+        markerArrow.setAttribute("refX", `${1 * this.scaling}`)
+        markerArrow.setAttribute("refY", `${0.5 * this.scaling}`)
+        markerArrow.setAttribute("orient", "auto")
+        markerArrow.setAttribute("markerUnits", "userSpaceOnUse")
+
+        const path = this.renderer.createElement("path", "svg")
+        path.setAttribute("d", `M0,0 L${1 * this.scaling},${0.5 * this.scaling} L0,${1 * this.scaling}`)
+        path.setAttribute("class", "marker")
+        markerArrow.appendChild(path)
+
+        defs.appendChild(markerArrow)
+    }
+
+    private deleteCssDefs(svg: SVGSVGElement): void {
+        const defs = svg.querySelector("defs")
+        if (defs) {
+            const style = defs.querySelector('style[type="text/css"]')
+            if (style) {
+                defs.removeChild(style)
+            }
+        }
+    }
+
+    private deleteMarkerDefs(svg: SVGSVGElement): void {
+        const defs = svg.querySelector("defs")
+        if (defs) {
+            const markers = defs.querySelectorAll("marker")
+            if (markers) {
+                markers.forEach(marker => defs.removeChild(marker))
+            }
         }
     }
 
     /**
-     * Adds the circles representing the penetration points to the group.
-     * TODO use markers for this
-     */
-    /*   private addStitchCirclesToGroup(shape: Shape, renderer: Renderer2, scaling: number) {
-        // Shove some circles along the shape element to see where they are
-        const radius = 0.15 * scaling
-
-        shape.
-
-        shape.stitches.forEach(point => {
-            const circle = paper.circle(point.x, point.y, radius)
-            circle.attr({
-                fill: "none",
-                elementFor: id,
-            })
-
-            shape.stitchGroup!.add(circle)
-        })
-    }
-*/
-    /**
      * Adds the lines representing the path of the stitching to the group.
      */
-    private addStitchLinesToGroup(shape: Shape, renderer: Renderer2): void {
+    private addStitchLinesToGroup(shape: Shape): void {
         this.stitchesToPaths(shape.stitches).forEach(path => {
-            const element = renderer.createElement("path", "svg") as SVGPathElement
+            const element = this.renderer.createElement("path", "svg") as SVGPathElement
             element.setAttribute("fill", "none")
             element.setAttribute("d", path)
-            renderer.appendChild(shape.stitchGroup, element)
+            element.setAttribute("class", "stitchablePath")
+            this.renderer.appendChild(this.stitchGroup, element)
         })
     }
 
     /**
      * Create an SVG group to hold the lines and circles used to render the stitches
      */
-    private createStitchGroup(shape: Shape, strokeWidth: number, renderer: Renderer2): void {
-        const container = shape.element.parentNode
-        if (shape.stitchGroup !== undefined) {
-            shape.stitchGroup.remove()
+    private createStitchGroup(svg: SVGSVGElement): void {
+        if (this.stitchGroup !== undefined) {
+            this.stitchGroup.remove()
         }
 
-        shape.stitchGroup = renderer.createElement("g", "svg") as SVGGElement
-        shape.stitchGroup.setAttribute("stroke-width", `${strokeWidth}px`)
-        shape.stitchGroup.setAttribute("stroke", this.settingsService.renderSettings.renderValues.colour)
-        renderer.appendChild(container, shape.stitchGroup)
+        const strokeWidth = this.settingsService.renderSettings.strokeWidth * this.scaling
+        this.stitchGroup = this.renderer.createElement("g", "svg") as SVGGElement
+        this.stitchGroup.setAttribute("stroke-width", `${strokeWidth}px`)
+        this.stitchGroup.setAttribute("stroke", this.settingsService.renderSettings.colour)
+        this.renderer.appendChild(svg, this.stitchGroup)
     }
 
     /**

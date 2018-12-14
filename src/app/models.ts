@@ -10,11 +10,6 @@ export class Shape {
 
     stitches: Point[] = []
     fillType: SatinFillType = SatinFillType.None
-
-    /**
-     * The svg group that contains the lines etc for the display of the stitches.
-     */
-    stitchGroup: SVGGElement | undefined = undefined
 }
 
 export class PathPart {

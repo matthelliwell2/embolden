@@ -32,7 +32,6 @@
     "ng5-slider": "^1.1.4",
     "ngx-color": "^2.0.5",
     "pathseg": "^1.2.0",
-    "rxjs": "^6.3.3",
     "ramda": "^0.26.0",
     "stream": "^0.0.2",
     "svgpath": "^2.2.1",

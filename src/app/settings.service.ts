@@ -1,38 +1,27 @@
-import {Injectable} from '@angular/core'
-import * as Rx from 'rxjs'
+import { Injectable } from "@angular/core"
 
+/**
+ * This service exposes the parameters that the user can control to adjust how the display renders. It persists them when they changes.
+ */
 @Injectable({
-    providedIn: 'root'
+    providedIn: "root"
 })
 export class SettingsService {
-
-    constructor() {
-    }
-
-    public renderSettings: RenderSettings = new RenderSettings()
-}
-
-export class RenderSettings {
     constructor() {
         const values = localStorage.getItem("renderSettings")
-        if (values !== null && values !== undefined) {
-            this.renderValues = JSON.parse(values) as RenderValues
+        if (values) {
+            this.renderSettings = JSON.parse(values) as RenderSettings
         }
-
-        this.subject.subscribe(this.onRenderSettingsChanged)
-
     }
 
-    renderValues = new RenderValues()
-
-    readonly subject = new Rx.Subject<void>()
-
-    private readonly onRenderSettingsChanged = () => {
-        localStorage.setItem("renderSettings", JSON.stringify(this.renderValues))
+    readonly onRenderSettingsChanged = () => {
+        localStorage.setItem("renderSettings", JSON.stringify(this.renderSettings))
     }
+
+    readonly renderSettings = new RenderSettings()
 }
 
-class RenderValues {
+class RenderSettings {
     strokeWidth: number = 0.1
-    colour = '#888'
+    colour = "#888"
 }

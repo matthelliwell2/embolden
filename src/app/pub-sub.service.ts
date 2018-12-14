@@ -14,7 +14,7 @@ export class PubSubService {
     constructor() {}
 
     publish(topic: TOPICS, data?: any) {
-        console.log("Event:", topic, data)
+        console.log("Event:", topic)
         this.subscribers
             .filter(subscriber => typeof subscriber[`on${topic}`] === "function")
             .forEach(subscriber => {

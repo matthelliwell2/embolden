@@ -38,11 +38,17 @@ export class ToolbarComponent implements OnInit {
         this.pubSubService.publish("LoadFile", this.file.nativeElement.files[0])
     }
 
+    /**
+     * Called when we want to display the setting modal dialog
+     */
     onSettings() {
         const modalRef = this.modalService.open(SettingsComponent)
         modalRef.componentInstance.name = "World"
     }
 
+    /**
+     * Called as part of dragging the toolbar around
+     */
     @HostListener("dragstart", ["$event"])
     onDragStart(event) {
         this.initialLeftPos = this.leftPos
@@ -51,6 +57,9 @@ export class ToolbarComponent implements OnInit {
         this.initialClientY = event.clientY
     }
 
+    /**
+     * Called as part of dragging the toolbar around
+     */
     @HostListener("dragend", ["$event"])
     onDragEnd(event) {
         this.leftPos = this.initialLeftPos + event.clientX - this.initialClientX

@@ -72,23 +72,11 @@ export class FileService {
                 const svgElement = svg[0] as SVGSVGElement
 
                 this.adjustForIntersectionLibrary(svgElement)
-                this.deleteCssDefs(svgElement)
-
                 resolve(svgElement)
             }
 
             r.readAsText(file)
         })
-    }
-
-    private deleteCssDefs(svg: SVGSVGElement): void {
-        const defs = svg.querySelector("defs")
-        if (defs) {
-            const style = defs.querySelector('style[type="text/css"]')
-            if (style) {
-                defs.removeChild(style)
-            }
-        }
     }
 
     /**

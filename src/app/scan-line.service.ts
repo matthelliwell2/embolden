@@ -1,7 +1,8 @@
-import { Injectable, Renderer2 } from "@angular/core"
+import { Injectable, Renderer2, RendererFactory2 } from "@angular/core"
 import * as svgIntersections from "svg-intersections"
 import { Intersection, Intersections, Point, Shape } from "./models"
 import * as Lib from "./lib/lib"
+import { PubSubService } from "./pub-sub.service"
 
 /**
  * This class is responsible for generate scan lines across an arbitrary shape.
@@ -10,22 +11,31 @@ import * as Lib from "./lib/lib"
     providedIn: "root"
 })
 export class ScanLineService {
-    constructor() {}
-
+    private readonly renderer: Renderer2
+    private scaling: number
     private readonly intersect = svgIntersections.intersect
     private readonly shape = svgIntersections.shape
+
+    constructor(rendererFactory: RendererFactory2, private pubSubService: PubSubService) {
+        this.renderer = rendererFactory.createRenderer(null, null)
+        this.pubSubService.subscribe(this)
+    }
+
+    onFileLoaded(file: { svg: SVGSVGElement; scaling: number }) {
+        this.scaling = file.scaling
+    }
 
     /**
      * This generates a series of horizontal lines that run the width of the shape. Each line is referred to as a scan line.
      * The scan lines are defined as parths so that in the future we can generalise this and make them curved paths etc.
      */
-    generateScanLines(heightMM: number, shape: Shape, scaling: number, renderer: Renderer2, minStitchLengthMM: number): Intersections[][] {
+    generateScanLines(heightMM: number, shape: Shape, minStitchLengthMM: number): Intersections[][] {
         const elementBBox = shape.element.getBBox()
-        const minStitchLength = minStitchLengthMM * scaling
-        const scanLineSeparation = this.calculateLineSeparation(elementBBox, heightMM * scaling)
+        const minStitchLength = minStitchLengthMM * this.scaling
+        const scanLineSeparation = this.calculateLineSeparation(elementBBox, heightMM * this.scaling)
 
         const intersections = this.generateFullWidthScanLinePaths(scanLineSeparation, elementBBox)
-            .map(path => this.stringToSVGElement(path, renderer, shape.element))
+            .map(path => this.stringToSVGElement(path, shape.element))
             .map(scanLine => this.getIntersections(shape, scanLine))
             .filter(intersections => intersections.length > 1)
             .map(intersections => this.calculateDistancesAlongScanlinePath(intersections))
@@ -127,10 +137,10 @@ export class ScanLineService {
         })
     }
 
-    private stringToSVGElement(path: string, renderer: Renderer2, parent: SVGPathElement): SVGPathElement {
-        const element = renderer.createElement("path", "svg") as SVGPathElement
+    private stringToSVGElement(path: string, parent: SVGPathElement): SVGPathElement {
+        const element = this.renderer.createElement("path", "svg") as SVGPathElement
         element.setAttribute("d", path)
-        renderer.appendChild(parent.parentNode, element)
+        this.renderer.appendChild(parent.parentNode, element)
         return element
     }
 

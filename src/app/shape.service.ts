@@ -1,4 +1,4 @@
-import { Injectable, Renderer2 } from "@angular/core"
+import { Injectable, Renderer2, RendererFactory2 } from "@angular/core"
 import { PathPart, Shape } from "./models"
 import * as svgpath from "svgpath"
 import { PubSubService } from "./pub-sub.service"
@@ -11,20 +11,23 @@ import Point = SvgPanZoom.Point
     providedIn: "root"
 })
 export class ShapeService {
+    private readonly renderer: Renderer2
+
     /**
      * A map of element id to the stitching properties of that element. This acts as the central control structure for
      * the stitching
      */
     readonly shapes: Map<string, Shape> = new Map()
 
-    constructor(private pubSubService: PubSubService) {
+    constructor(private pubSubService: PubSubService, rendererFactory: RendererFactory2) {
+        this.renderer = rendererFactory.createRenderer(null, null)
         this.pubSubService.subscribe(this)
     }
 
-    getShape(element: SVGPathElement, renderer: Renderer2): Shape {
+    getShape(element: SVGPathElement): Shape {
         const id = element.getAttribute("id") as string
         if (!this.shapes.has(id)) {
-            const pathParts = this.getPathParts(element, renderer)
+            const pathParts = this.getPathParts(element)
 
             this.shapes.set(id, new Shape(element, pathParts))
         }
@@ -43,7 +46,7 @@ export class ShapeService {
      * In addition the path may be made up of a number of discontiguous parts that are separated by Move commands. We've calls these subpaths. We need to know in which subpath
      * a segment is in so that we can work out if we can move from one segment to another along the edge of the path.
      */
-    private getPathParts(element: SVGPathElement, renderer: Renderer2): PathPart[] {
+    private getPathParts(element: SVGPathElement): PathPart[] {
         const path = svgpath(element.getAttribute("d") as string)
         const pathParts: PathPart[] = []
         let startOfSubpath: Point
@@ -56,15 +59,15 @@ export class ShapeService {
                     const len = previousSegment!.getTotalLength()
                     const end = previousSegment!.getPointAtLength(len)
                     const path = `M${end.x},${end.y}L${startOfSubpath.x},${startOfSubpath.y}`
-                    const segmentElement = this.stringToPathElement(path, renderer)
-                    this.renderElement(segmentElement, element, renderer)
+                    const segmentElement = this.stringToPathElement(path)
+                    this.renderElement(segmentElement, element)
                     pathParts.push({ segment: segmentElement, subPath: subPathNumber })
                 } else if (segment[0] !== "M") {
                     // We've got an L or C command that forms a segment. Add a move command to the start  of the segment so it starts from the right place
                     const path = `M${x},${y} ${segment.join(" ")}`
 
-                    const segmentElement = this.stringToPathElement(path, renderer)
-                    this.renderElement(segmentElement, element, renderer)
+                    const segmentElement = this.stringToPathElement(path)
+                    this.renderElement(segmentElement, element)
                     pathParts.push({ segment: segmentElement, subPath: subPathNumber })
 
                     previousSegment = segmentElement
@@ -83,13 +86,13 @@ export class ShapeService {
     /**
      * We have to actually render the elements otherwise calls to getBBox etc don't work.
      */
-    private renderElement(element: SVGPathElement, parent: SVGPathElement, renderer: Renderer2) {
+    private renderElement(element: SVGPathElement, parent: SVGPathElement) {
         element.setAttribute("visibility", "hidden")
-        renderer.appendChild(parent.parentNode, element)
+        this.renderer.appendChild(parent.parentNode, element)
     }
 
-    private stringToPathElement(path: string, renderer: Renderer2): SVGPathElement {
-        const element = renderer.createElement("path", "svg") as SVGPathElement
+    private stringToPathElement(path: string): SVGPathElement {
+        const element = this.renderer.createElement("path", "svg") as SVGPathElement
         element.setAttribute("d", path)
         return element
     }

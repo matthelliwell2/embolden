@@ -1,8 +1,9 @@
-import { Injectable, Renderer2 } from "@angular/core"
+import { Injectable } from "@angular/core"
 import { ScanLineService } from "./scan-line.service"
 import { Intersection, Intersections, Point, SatinFillType, Shape } from "./models"
 import * as Lib from "./lib/lib"
 import { OptimiserService } from "./optimiser.service"
+import { PubSubService } from "./pub-sub.service"
 
 const Bezier = require("bezier-js")
 
@@ -19,9 +20,17 @@ export class StitchService {
     private static readonly STITCH_LENGTH = 3.5
     private static readonly MIN_STITCH_LENGTH = 1.5
 
-    constructor(private scanLineService: ScanLineService, private optimiserService: OptimiserService) {}
+    private scaling: number
 
-    fill(shape: Shape, scaling: number, renderer: Renderer2): void {
+    constructor(private scanLineService: ScanLineService, private optimiserService: OptimiserService, private pubSubService: PubSubService) {
+        this.pubSubService.subscribe(this)
+    }
+
+    onFileLoaded(file: { svg: SVGSVGElement; scaling: number }) {
+        this.scaling = file.scaling
+    }
+
+    fill(shape: Shape): void {
         if (shape.fillType === SatinFillType.None) {
             shape.stitches = []
             return
@@ -29,10 +38,10 @@ export class StitchService {
 
         this.closePath(shape.element)
 
-        const scanLines = this.scanLineService.generateScanLines(StitchService.ROW_HEIGHT, shape, scaling, renderer, StitchService.MIN_STITCH_LENGTH)
+        const scanLines = this.scanLineService.generateScanLines(StitchService.ROW_HEIGHT, shape, StitchService.MIN_STITCH_LENGTH)
         this.optimiserService.optimise(scanLines)
 
-        this.generateStitches(shape, scanLines, scaling)
+        this.generateStitches(shape, scanLines)
 
         console.log("Num stitches =", shape.stitches.length)
     }
@@ -47,10 +56,10 @@ export class StitchService {
         }
     }
 
-    private generateStitches(shape: Shape, allScanLines: Intersections[][], scaling: number) {
+    private generateStitches(shape: Shape, allScanLines: Intersections[][]) {
         let allStitches: Point[] = []
-        const stitchLength = StitchService.STITCH_LENGTH * scaling
-        const minStitchLength = StitchService.MIN_STITCH_LENGTH * scaling
+        const stitchLength = StitchService.STITCH_LENGTH * this.scaling
+        const minStitchLength = StitchService.MIN_STITCH_LENGTH * this.scaling
 
         let previousColumnOfScanLines: Intersections[] | undefined = undefined
         let count = 0
