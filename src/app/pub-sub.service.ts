@@ -1,6 +1,6 @@
 import { Injectable } from "@angular/core"
 
-type TOPICS = "LoadFile" | "FileLoaded" | "ElementSelected" | "ElementDeselected"
+type TOPICS = "LoadFile" | "FileLoaded" | "ElementSelected" | "ElementDeselected" | "RenderSettingsChanged"
 
 /**
  * Simple pu/sub service to isolate publishers and subscribers. This is similar to rxjs subscriber but I don't fancy using it for various reason.

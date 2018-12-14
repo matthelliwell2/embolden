@@ -1,27 +1,32 @@
 import { Injectable } from "@angular/core"
+import { PubSubService } from "./pub-sub.service"
 
 /**
- * This service exposes the parameters that the user can control to adjust how the display renders. It persists them when they changes.
+ * This service is responsible for loading saving settings. This is done in a service rather than in the setting component so that the settings can be loaded
+ * even if the settings component isn't accessed
  */
 @Injectable({
     providedIn: "root"
 })
 export class SettingsService {
-    constructor() {
+    renderSettings: RenderSettings
+
+    constructor(private pubSubService: PubSubService) {
+        this.pubSubService.subscribe(this)
         const values = localStorage.getItem("renderSettings")
         if (values) {
-            this.renderSettings = JSON.parse(values) as RenderSettings
+            this.renderSettings = JSON.parse(values)
+        } else {
+            this.renderSettings = new RenderSettings()
         }
     }
 
-    readonly onRenderSettingsChanged = () => {
-        localStorage.setItem("renderSettings", JSON.stringify(this.renderSettings))
+    readonly onRenderSettingsChanged = (settings: RenderSettings) => {
+        localStorage.setItem("renderSettings", JSON.stringify(settings))
     }
-
-    readonly renderSettings = new RenderSettings()
 }
 
-class RenderSettings {
+export class RenderSettings {
     strokeWidth: number = 0.1
     colour = "#888"
 }

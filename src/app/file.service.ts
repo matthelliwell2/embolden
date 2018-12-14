@@ -22,7 +22,9 @@ Object.defineProperty(Array.prototype, "toStringWithIndent", {
     providedIn: "root"
 })
 export class FileService {
-    constructor(private pubSubService: PubSubService) {}
+    constructor(private pubSubService: PubSubService) {
+        console.log("file service")
+    }
 
     /**
      * Loads the specified file and does some initial processing on it.

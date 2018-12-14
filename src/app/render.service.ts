@@ -1,7 +1,7 @@
 import { Injectable, Renderer2, RendererFactory2 } from "@angular/core"
 import { Point, SatinFillType, Shape } from "./models"
-import { SettingsService } from "./settings.service"
 import { PubSubService } from "./pub-sub.service"
+import { RenderSettings, SettingsService } from "./settings.service"
 
 /**
  * This is responsible for rendering an image of the stitches onto the screen
@@ -12,10 +12,12 @@ import { PubSubService } from "./pub-sub.service"
 export class RenderService {
     private stitchGroup: SVGGElement
     private scaling: number
+    private renderSettings = new RenderSettings()
     private renderer: Renderer2
 
-    constructor(private settingsService: SettingsService, private pubSubService: PubSubService, rendererFactory: RendererFactory2) {
+    constructor(private pubSubService: PubSubService, rendererFactory: RendererFactory2, settingsService: SettingsService) {
         this.renderer = rendererFactory.createRenderer(null, null)
+        this.renderSettings = settingsService.renderSettings
         this.pubSubService.subscribe(this)
     }
 
@@ -26,6 +28,12 @@ export class RenderService {
         this.addMarkers(file.svg)
 
         this.createStitchGroup(file.svg)
+    }
+
+    onRenderSettingsChanged(settings: RenderSettings) {
+        this.renderSettings = settings
+        this.stitchGroup.setAttribute("stroke-width", `${this.renderSettings.strokeWidth * this.scaling}px`)
+        this.stitchGroup.setAttribute("stroke", this.renderSettings.colour)
     }
 
     /**
@@ -103,10 +111,10 @@ export class RenderService {
             this.stitchGroup.remove()
         }
 
-        const strokeWidth = this.settingsService.renderSettings.strokeWidth * this.scaling
+        const strokeWidth = this.renderSettings.strokeWidth * this.scaling
         this.stitchGroup = this.renderer.createElement("g", "svg") as SVGGElement
         this.stitchGroup.setAttribute("stroke-width", `${strokeWidth}px`)
-        this.stitchGroup.setAttribute("stroke", this.settingsService.renderSettings.colour)
+        this.stitchGroup.setAttribute("stroke", this.renderSettings.colour)
         this.renderer.appendChild(svg, this.stitchGroup)
     }
 
