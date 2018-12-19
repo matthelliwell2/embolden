@@ -26,6 +26,7 @@
     animation-name: highlight;
     animation-duration: 200ms;
     animation-iteration-count: 3;
+    marker: url(#markerSolidCircle);
 }
 
 @keyframes highlight {

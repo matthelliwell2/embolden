@@ -18,6 +18,7 @@ export class RenderService {
 
     private markerArrow: SVGMarkerElement
     private markerCircle: SVGMarkerElement
+    private markerSolidCircle: SVGMarkerElement
 
     constructor(private pubSubService: PubSubService, rendererFactory: RendererFactory2, settingsService: SettingsService) {
         this.renderer = rendererFactory.createRenderer(null, null)
@@ -59,12 +60,14 @@ export class RenderService {
         }
 
         this.markerCircle = this.createMarker("markerCircle", this.createCircle())
+        this.markerSolidCircle = this.createMarker("markerSolidCircle", this.createSolidCircle())
         this.markerArrow = this.createMarker("markerArrow", this.createArrow())
 
         this.setRenderAttributes()
 
         defs.appendChild(this.markerArrow)
         defs.appendChild(this.markerCircle)
+        defs.appendChild(this.markerSolidCircle)
     }
 
     private createCircle(): SVGGraphicsElement {
@@ -74,6 +77,16 @@ export class RenderService {
         circle.setAttribute("r", `${0.45}`)
         circle.setAttribute("class", "marker")
         circle.setAttribute("fill", "none")
+
+        return circle
+    }
+
+    private createSolidCircle(): SVGGraphicsElement {
+        const circle = this.renderer.createElement("circle", "svg") as SVGCircleElement
+        circle.setAttribute("cx", `${0.5}`)
+        circle.setAttribute("cy", `${0.5}`)
+        circle.setAttribute("r", `${0.45}`)
+        circle.setAttribute("class", "marker")
 
         return circle
     }
@@ -184,6 +197,10 @@ export class RenderService {
 
         if (this.markerCircle) {
             this.setMarkerAttributes(this.markerCircle)
+        }
+
+        if (this.markerSolidCircle) {
+            this.setMarkerAttributes(this.markerSolidCircle)
         }
     }
 
