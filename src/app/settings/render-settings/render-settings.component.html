@@ -2,12 +2,29 @@
     <div class="row mb-2">
         <label class="col-2 pt-2 font-weight-bold">Width:</label>
         <div class="col-10 border rounded-1" *ngIf="renderSettings">
-            <ng5-slider [(value)]="renderSettings.strokeWidth" [options]="options" [manualRefresh]="manualRefresh" (userChangeEnd)="onStrokeWidthChangeComplete()"></ng5-slider>
+            <ng5-slider
+                [(value)]="renderSettings.strokeWidth"
+                [options]="strokeWidthSliderOptions"
+                [manualRefresh]="manualRefresh"
+                (userChangeEnd)="onStrokeWidthChangeComplete()"
+            ></ng5-slider>
         </div>
     </div>
     <div class="row mb-2">
         <label class="col-2 pt-2 font-weight-bold align-middle">Markers:</label>
-        <div class="col-10 border rounded-1 pt-2 pb-2" *ngIf="renderSettings"><ngx-toggle [(ngModel)]="showMarkers" id="showMarkers"></ngx-toggle></div>
+        <div class="col-10 border rounded-1 pt-2 pb-2" *ngIf="renderSettings">
+            <div class="row">
+                <div class="col-3"><ngx-toggle [(ngModel)]="showMarkers" id="showMarkers"></ngx-toggle></div>
+                <div class="col-9" *ngIf="showMarkers">
+                    <ng5-slider
+                        [(value)]="renderSettings.markerSize"
+                        [options]="markerSizeSliderOptions"
+                        [manualRefresh]="manualRefresh"
+                        (userChangeEnd)="onMarkerSizeChangeComplete()"
+                    ></ng5-slider>
+                </div>
+            </div>
+        </div>
     </div>
     <div class="row">
         <label class="col-2 font-weight-bold">Colour:</label>

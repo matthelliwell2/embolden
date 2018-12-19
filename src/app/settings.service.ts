@@ -27,7 +27,8 @@ export class SettingsService {
 }
 
 export class RenderSettings {
-    strokeWidth: number = 0.1
+    strokeWidth = 0.1
     colour = "#888"
     showMarkers = true
+    markerSize = 1
 }

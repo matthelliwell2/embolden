@@ -12,6 +12,7 @@ import { RenderSettings, SettingsService } from "./settings.service"
 export class RenderService {
     private stitchGroup: SVGGElement
     private scaling: number
+    private svg: SVGSVGElement
     private renderSettings = new RenderSettings()
     private renderer: Renderer2
 
@@ -26,12 +27,13 @@ export class RenderService {
 
     onFileLoaded(file: { svg: SVGSVGElement; scaling: number }) {
         this.scaling = file.scaling
+        this.svg = file.svg
 
         this.deleteCssDefs(file.svg)
         this.deleteMarkerDefs(file.svg)
 
-        this.addMarkers(file.svg)
-        this.createStitchGroup(file.svg)
+        this.addMarkers()
+        this.createStitchGroup()
     }
 
     onRenderSettingsChanged(settings: RenderSettings) {
@@ -48,16 +50,16 @@ export class RenderService {
         }
     }
 
-    private addMarkers(svg: SVGSVGElement): void {
-        let defs = svg.querySelector("defs")
+    private addMarkers(): void {
+        let defs = this.svg.querySelector("defs")
         if (!defs) {
             const defsElement = this.renderer.createElement("defs", "svg")
-            svg.appendChild(defsElement)
-            defs = svg.querySelector("defs")!
+            this.svg.appendChild(defsElement)
+            defs = this.svg.querySelector("defs")!
         }
 
-        this.markerCircle = this.createMarker("markerCircle", this.createCircle(), svg)
-        this.markerArrow = this.createMarker("markerArrow", this.createArrow(), svg)
+        this.markerCircle = this.createMarker("markerCircle", this.createCircle())
+        this.markerArrow = this.createMarker("markerArrow", this.createArrow())
 
         this.setRenderAttributes()
 
@@ -86,25 +88,40 @@ export class RenderService {
         return path
     }
 
-    private createMarker(id: string, element: SVGGraphicsElement, svg: SVGSVGElement): SVGMarkerElement {
+    private createMarker(id: string, element: SVGGraphicsElement): SVGMarkerElement {
         const marker = this.renderer.createElement("marker", "svg") as SVGMarkerElement
         marker.setAttribute("id", id)
-        marker.setAttribute("markerWidth", `${this.scaling}`)
-        marker.setAttribute("markerHeight", `${this.scaling}`)
-        marker.setAttribute("refX", `${this.scaling / 2}`)
-        marker.setAttribute("refY", `${this.scaling / 2}`)
-
         marker.setAttribute("orient", "auto")
         marker.setAttribute("markerUnits", "userSpaceOnUse")
 
-        element.setAttribute("stroke-width", `${this.renderSettings.strokeWidth}px`)
-        const transform = svg.createSVGTransform()
-        transform.setScale(this.scaling, this.scaling)
-        element.transform.baseVal.appendItem(transform)
-
         marker.appendChild(element)
+        this.setMarkerAttributes(marker)
 
         return marker
+    }
+
+    private setMarkerAttributes(marker) {
+        const scaling = this.scaling * this.renderSettings.markerSize
+
+        marker.setAttribute("markerWidth", `${scaling}`)
+        marker.setAttribute("markerHeight", `${scaling}`)
+        marker.setAttribute("refX", `${scaling / 2}`)
+        marker.setAttribute("refY", `${scaling / 2}`)
+
+        marker.setAttribute("stroke", this.renderSettings.colour)
+
+        const element = marker.childNodes[0] as SVGGraphicsElement
+        if (this.renderSettings.showMarkers) {
+            element.removeAttribute("style")
+        } else {
+            element.setAttribute("style", "display: none")
+        }
+
+        element.setAttribute("stroke-width", `${this.renderSettings.strokeWidth}px`)
+        const transform = this.svg.createSVGTransform()
+        transform.setScale(scaling, scaling)
+        element.transform.baseVal.clear()
+        element.transform.baseVal.appendItem(transform)
     }
 
     private deleteCssDefs(svg: SVGSVGElement): void {
@@ -143,14 +160,14 @@ export class RenderService {
     /**
      * Create an SVG group to hold the lines and circles used to render the stitches
      */
-    private createStitchGroup(svg: SVGSVGElement): void {
+    private createStitchGroup(): void {
         if (this.stitchGroup !== undefined) {
             this.stitchGroup.remove()
         }
 
         this.stitchGroup = this.renderer.createElement("g", "svg") as SVGGElement
         this.setRenderAttributes()
-        this.renderer.appendChild(svg, this.stitchGroup)
+        this.renderer.appendChild(this.svg, this.stitchGroup)
     }
 
     private setRenderAttributes(): void {
@@ -162,23 +179,11 @@ export class RenderService {
         }
 
         if (this.markerArrow) {
-            this.markerArrow.setAttribute("stroke", this.renderSettings.colour)
-            const element = this.markerArrow.childNodes[0] as SVGElement
-            if (this.renderSettings.showMarkers) {
-                element.removeAttribute("style")
-            } else {
-                element.setAttribute("style", "display: none")
-            }
+            this.setMarkerAttributes(this.markerArrow)
         }
 
         if (this.markerCircle) {
-            this.markerCircle.setAttribute("stroke", this.renderSettings.colour)
-            const element = this.markerCircle.childNodes[0] as SVGElement
-            if (this.renderSettings.showMarkers) {
-                element.removeAttribute("style")
-            } else {
-                element.setAttribute("style", "display: none")
-            }
+            this.setMarkerAttributes(this.markerCircle)
         }
     }
 

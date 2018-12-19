@@ -21,11 +21,18 @@ export class RenderSettingsComponent implements OnInit {
         this.renderSettings = settingsService.renderSettings
     }
 
-    options: Options = {
+    strokeWidthSliderOptions: Options = {
         floor: 0,
         ceil: 1,
         step: 0.01,
         precisionLimit: 2
+    }
+
+    markerSizeSliderOptions: Options = {
+        floor: 0,
+        ceil: 5,
+        step: 0.2,
+        precisionLimit: 3
     }
 
     ngOnInit() {}
@@ -43,6 +50,10 @@ export class RenderSettingsComponent implements OnInit {
         this.pubSubService.publish("RenderSettingsChanged", this.renderSettings)
     }
 
+    onMarkerSizeChangeComplete(): void {
+        this.pubSubService.publish("RenderSettingsChanged", this.renderSettings)
+    }
+
     onColourChangeComplete(event: ColorEvent): void {
         this.renderSettings.colour = event.color.hex
         this.pubSubService.publish("RenderSettingsChanged", this.renderSettings)
@@ -56,9 +67,5 @@ export class RenderSettingsComponent implements OnInit {
     }
     get showMarkers(): boolean {
         return this.renderSettings.showMarkers
-    }
-
-    onShowMarkersChanged(): void {
-        this.pubSubService.publish("RenderSettingsChanged", this.renderSettings)
     }
 }
