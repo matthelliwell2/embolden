@@ -15,6 +15,9 @@ export class RenderService {
     private renderSettings = new RenderSettings()
     private renderer: Renderer2
 
+    private markerArrow: SVGMarkerElement
+    private markerCircle: SVGMarkerElement
+
     constructor(private pubSubService: PubSubService, rendererFactory: RendererFactory2, settingsService: SettingsService) {
         this.renderer = rendererFactory.createRenderer(null, null)
         this.renderSettings = settingsService.renderSettings
@@ -23,17 +26,17 @@ export class RenderService {
 
     onFileLoaded(file: { svg: SVGSVGElement; scaling: number }) {
         this.scaling = file.scaling
+
         this.deleteCssDefs(file.svg)
         this.deleteMarkerDefs(file.svg)
-        this.addMarkers(file.svg)
 
+        this.addMarkers(file.svg)
         this.createStitchGroup(file.svg)
     }
 
     onRenderSettingsChanged(settings: RenderSettings) {
         this.renderSettings = settings
-        this.stitchGroup.setAttribute("stroke-width", `${this.renderSettings.strokeWidth * this.scaling}px`)
-        this.stitchGroup.setAttribute("stroke", this.renderSettings.colour)
+        this.setRenderAttributes()
     }
 
     /**
@@ -53,21 +56,55 @@ export class RenderService {
             defs = svg.querySelector("defs")!
         }
 
-        const markerArrow = this.renderer.createElement("marker", "svg")
-        markerArrow.setAttribute("id", "markerArrow")
-        markerArrow.setAttribute("markerWidth", `${1 * this.scaling}`)
-        markerArrow.setAttribute("markerHeight", `${1 * this.scaling}`)
-        markerArrow.setAttribute("refX", `${1 * this.scaling}`)
-        markerArrow.setAttribute("refY", `${0.5 * this.scaling}`)
-        markerArrow.setAttribute("orient", "auto")
-        markerArrow.setAttribute("markerUnits", "userSpaceOnUse")
+        this.markerCircle = this.createMarker("markerCircle", this.createCircle(), svg)
+        this.markerArrow = this.createMarker("markerArrow", this.createArrow(), svg)
 
-        const path = this.renderer.createElement("path", "svg")
-        path.setAttribute("d", `M0,0 L${1 * this.scaling},${0.5 * this.scaling} L0,${1 * this.scaling}`)
+        this.setRenderAttributes()
+
+        defs.appendChild(this.markerArrow)
+        defs.appendChild(this.markerCircle)
+    }
+
+    private createCircle(): SVGGraphicsElement {
+        const circle = this.renderer.createElement("circle", "svg") as SVGCircleElement
+        circle.setAttribute("cx", `${0.5}`)
+        circle.setAttribute("cy", `${0.5}`)
+        circle.setAttribute("r", `${0.45}`)
+        circle.setAttribute("class", "marker")
+        circle.setAttribute("fill", "none")
+
+        return circle
+    }
+
+    private createArrow(): SVGGraphicsElement {
+        const path = this.renderer.createElement("path", "svg") as SVGPathElement
+        path.setAttribute("d", "M0,0 L1,0.5 L0,1 L0.5,0.5Z")
         path.setAttribute("class", "marker")
-        markerArrow.appendChild(path)
+        path.setAttribute("stroke-linecap", "round")
+        path.setAttribute("fill", "none")
 
-        defs.appendChild(markerArrow)
+        return path
+    }
+
+    private createMarker(id: string, element: SVGGraphicsElement, svg: SVGSVGElement): SVGMarkerElement {
+        const marker = this.renderer.createElement("marker", "svg") as SVGMarkerElement
+        marker.setAttribute("id", id)
+        marker.setAttribute("markerWidth", `${this.scaling}`)
+        marker.setAttribute("markerHeight", `${this.scaling}`)
+        marker.setAttribute("refX", `${this.scaling / 2}`)
+        marker.setAttribute("refY", `${this.scaling / 2}`)
+
+        marker.setAttribute("orient", "auto")
+        marker.setAttribute("markerUnits", "userSpaceOnUse")
+
+        element.setAttribute("stroke-width", `${this.renderSettings.strokeWidth}px`)
+        const transform = svg.createSVGTransform()
+        transform.setScale(this.scaling, this.scaling)
+        element.transform.baseVal.appendItem(transform)
+
+        marker.appendChild(element)
+
+        return marker
     }
 
     private deleteCssDefs(svg: SVGSVGElement): void {
@@ -111,11 +148,38 @@ export class RenderService {
             this.stitchGroup.remove()
         }
 
-        const strokeWidth = this.renderSettings.strokeWidth * this.scaling
         this.stitchGroup = this.renderer.createElement("g", "svg") as SVGGElement
-        this.stitchGroup.setAttribute("stroke-width", `${strokeWidth}px`)
-        this.stitchGroup.setAttribute("stroke", this.renderSettings.colour)
+        this.setRenderAttributes()
         this.renderer.appendChild(svg, this.stitchGroup)
+    }
+
+    private setRenderAttributes(): void {
+        const strokeWidth = this.renderSettings.strokeWidth * this.scaling
+
+        if (this.stitchGroup) {
+            this.stitchGroup.setAttribute("stroke-width", `${strokeWidth}px`)
+            this.stitchGroup.setAttribute("stroke", this.renderSettings.colour)
+        }
+
+        if (this.markerArrow) {
+            this.markerArrow.setAttribute("stroke", this.renderSettings.colour)
+            const element = this.markerArrow.childNodes[0] as SVGElement
+            if (this.renderSettings.showMarkers) {
+                element.removeAttribute("style")
+            } else {
+                element.setAttribute("style", "display: none")
+            }
+        }
+
+        if (this.markerCircle) {
+            this.markerCircle.setAttribute("stroke", this.renderSettings.colour)
+            const element = this.markerCircle.childNodes[0] as SVGElement
+            if (this.renderSettings.showMarkers) {
+                element.removeAttribute("style")
+            } else {
+                element.setAttribute("style", "display: none")
+            }
+        }
     }
 
     /**
@@ -143,20 +207,4 @@ export class RenderService {
         }
         return paths
     }
-
-    /**
-     * Called when we need to change the way the element is rendered because the users has changed the settings.
-     */
-    /*
-    onRenderSettingsChanged(elementProperties: Shape) {
-        const width = this.svgService.mmToViewBoxLength(this.settingsService.renderSettings.renderValues.strokeWidth)
-
-        if (elementProperties.stitchGroup) {
-            elementProperties.stitchGroup.attr({
-                "stroke-width": `${width}px`,
-                stroke: this.settingsService.renderSettings.renderValues.colour
-            })
-        }
-    }
-*/
 }

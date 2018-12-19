@@ -15,12 +15,13 @@ import { RenderSettingsComponent } from "./settings/render-settings/render-setti
 import { Ng5SliderModule } from "ng5-slider"
 import { ColorChromeModule } from "ngx-color/chrome"
 import { SettingsService } from "./settings.service"
+import { NgxToggleModule } from "ngx-toggle"
 
 library.add(faFolderOpen, faBold, faWindowRestore, faSlidersH)
 
 @NgModule({
     declarations: [AppComponent, EditComponent, ToolbarComponent, PropertiesBarComponent, StitchControlComponent, SettingsComponent, RenderSettingsComponent],
-    imports: [BrowserModule, NgbModule, FontAwesomeModule, FormsModule, Ng5SliderModule, ColorChromeModule],
+    imports: [BrowserModule, NgbModule, FontAwesomeModule, FormsModule, Ng5SliderModule, ColorChromeModule, NgxToggleModule],
     providers: [SettingsService],
     bootstrap: [AppComponent],
     entryComponents: [SettingsComponent]

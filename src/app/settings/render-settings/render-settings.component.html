@@ -1,13 +1,17 @@
 <div class="container">
     <div class="row mb-2">
-        <label class="col-2 pt-2">Width:</label>
+        <label class="col-2 pt-2 font-weight-bold">Width:</label>
         <div class="col-10 border rounded-1" *ngIf="renderSettings">
             <ng5-slider [(value)]="renderSettings.strokeWidth" [options]="options" [manualRefresh]="manualRefresh" (userChangeEnd)="onStrokeWidthChangeComplete()"></ng5-slider>
         </div>
     </div>
+    <div class="row mb-2">
+        <label class="col-2 pt-2 font-weight-bold align-middle">Markers:</label>
+        <div class="col-10 border rounded-1 pt-2 pb-2" *ngIf="renderSettings"><ngx-toggle [(ngModel)]="showMarkers" id="showMarkers"></ngx-toggle></div>
+    </div>
     <div class="row">
-        <label class="col-2 pt-2">Colour:</label>
-        <div class="col-10 border rounded-1" *ngIf="renderSettings">
+        <label class="col-2 font-weight-bold">Colour:</label>
+        <div class="col-10 border rounded-1 p-2" *ngIf="renderSettings">
             <color-chrome [color]="renderSettings.colour" (onChangeComplete)="onColourChangeComplete($event)" [disableAlpha]="true"></color-chrome>
         </div>
     </div>

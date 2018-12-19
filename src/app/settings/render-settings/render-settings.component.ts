@@ -2,7 +2,7 @@ import { Component, EventEmitter, OnInit } from "@angular/core"
 import { Options } from "ng5-slider"
 import { ColorEvent } from "ngx-color"
 import { PubSubService } from "../../pub-sub.service"
-import { SettingsService } from "../../settings.service"
+import { RenderSettings, SettingsService } from "../../settings.service"
 
 /**
  * Component that allows user to config how the stitches and shapes are rendered on the screen. None of this affects the generation of the actual stitches.
@@ -14,7 +14,7 @@ import { SettingsService } from "../../settings.service"
 })
 export class RenderSettingsComponent implements OnInit {
     manualRefresh: EventEmitter<void> = new EventEmitter<void>()
-    private readonly renderSettings
+    private readonly renderSettings: RenderSettings
 
     constructor(private pubSubService: PubSubService, settingsService: SettingsService) {
         this.pubSubService.subscribe(this)
@@ -45,6 +45,20 @@ export class RenderSettingsComponent implements OnInit {
 
     onColourChangeComplete(event: ColorEvent): void {
         this.renderSettings.colour = event.color.hex
+        this.pubSubService.publish("RenderSettingsChanged", this.renderSettings)
+    }
+
+    set showMarkers(show: boolean) {
+        if (this.renderSettings) {
+            this.renderSettings.showMarkers = show
+            this.pubSubService.publish("RenderSettingsChanged", this.renderSettings)
+        }
+    }
+    get showMarkers(): boolean {
+        return this.renderSettings.showMarkers
+    }
+
+    onShowMarkersChanged(): void {
         this.pubSubService.publish("RenderSettingsChanged", this.renderSettings)
     }
 }

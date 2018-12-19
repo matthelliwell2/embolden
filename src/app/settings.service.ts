@@ -15,7 +15,7 @@ export class SettingsService {
         this.pubSubService.subscribe(this)
         const values = localStorage.getItem("renderSettings")
         if (values) {
-            this.renderSettings = JSON.parse(values)
+            this.renderSettings = { ...new RenderSettings(), ...JSON.parse(values) }
         } else {
             this.renderSettings = new RenderSettings()
         }
@@ -29,4 +29,5 @@ export class SettingsService {
 export class RenderSettings {
     strokeWidth: number = 0.1
     colour = "#888"
+    showMarkers = true
 }
