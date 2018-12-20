@@ -63,7 +63,6 @@ export class StitchService {
 
         let previousColumnOfScanLines: Intersections[] | undefined = undefined
         let count = 0
-        // const x = 11
         allScanLines.forEach(columnOfScanLines => {
             const stitchesForColumn = this.generateStitchesForScanLines(shape, columnOfScanLines, stitchLength, minStitchLength)
 
@@ -72,23 +71,21 @@ export class StitchService {
                 const from: Intersection = previousColumnOfScanLines[previousColumnOfScanLines!.length - 1].end
 
                 const to = columnOfScanLines[0].start
-                // if (count === x + 1) {
-                const joinStitches = this.generateStitchesAlongShape(shape, from, to, minStitchLength)
+                const joinStitches = this.generateStitchesAlongShape(shape, from, to, stitchLength)
                 if (joinStitches.length > 0) {
                     console.log("join stitches:", joinStitches.length)
                     allStitches.push(...joinStitches)
                 }
-                // }
             }
 
             if (stitchesForColumn.length > 0) {
                 previousColumnOfScanLines = columnOfScanLines
             }
 
-            // if (count === x +1) {
+            // if (count === 0) {
             allStitches.push(...stitchesForColumn)
             // }
-            ++count
+            // ++count
         })
 
         console.log("Num columns", count)
@@ -215,17 +212,14 @@ export class StitchService {
 
     private generateStitchesAlongElement(element: SVGPathElement, fromTValue: number, toTValue: number, stitchLength: number): Point[] {
         const distance = element.getTotalLength() * Math.abs(fromTValue - toTValue)
-        const numStitches = Math.round(distance / stitchLength) + 1
-        if (numStitches < 2) {
-            return []
-        }
+        const numStitches = Math.ceil(distance / stitchLength) + 1
 
         const stitches: Point[] = []
         const coords = Lib.getControlPointsFromPath(element)
         if (coords.length == 4) {
             const b = new Bezier(coords)
 
-            for (let i = 0; i < numStitches; ++i) {
+            for (let i = 1; i < numStitches - 1; ++i) {
                 if (fromTValue < toTValue) {
                     // forwards
                     const fraction = ((toTValue - fromTValue) / (numStitches - 1)) * i
@@ -237,7 +231,7 @@ export class StitchService {
                 }
             }
         } else if (coords.length === 2) {
-            for (let i = 0; i < numStitches; ++i) {
+            for (let i = 1; i < numStitches - 1; ++i) {
                 const fraction = ((toTValue - fromTValue) / (numStitches - 1)) * i
                 if (fromTValue < toTValue) {
                     stitches.push({ x: coords[0].x + (coords[1].x - coords[0].x) * fraction, y: coords[0].y + (coords[1].y - coords[0].y) * fraction })
