@@ -23,5 +23,5 @@
 .stitchablePath {
     marker-start: url(#markerCircle);
     marker-mid: url(#markerArrow);
-    marker-end: url(#markerFilledCircle);
+    marker-end: url(#markerCircle);
 }

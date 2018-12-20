@@ -213,9 +213,7 @@ export class RenderService {
         for (let i = 0; i < stitches.length; ++i) {
             if (path.length === 0) {
                 path.push(`M${stitches[i].x},${stitches[i].y} `)
-            }
-
-            if (isNaN(stitches[i].x)) {
+            } else if (isNaN(stitches[i].x)) {
                 // We need to start a new path
                 paths.push("".concat(...path))
                 path = []
