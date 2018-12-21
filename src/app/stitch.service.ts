@@ -42,8 +42,6 @@ export class StitchService {
         this.optimiserService.optimise(scanLines)
 
         this.generateStitches(shape, scanLines)
-
-        console.log("Num stitches =", shape.stitches.length)
     }
 
     /**
@@ -89,8 +87,9 @@ export class StitchService {
         })
 
         console.log("Num columns", count)
+        console.log("Num stitches", allStitches.length)
 
-        shape.stitches = allStitches
+        shape.stitches = this.splitStitchesIntoPaths(allStitches)
     }
 
     /**
@@ -278,5 +277,28 @@ export class StitchService {
         }
 
         return results
+    }
+
+    /**
+     * The stitches we've generated may be split into independent paths. This is indicated by the coords being NaN. Therefore we go through the stitches and break
+     * split them up into array. As the path can get split in a couple of places, this is tricky to do as we go along so we do it as a piece of post processing
+     */
+    private splitStitchesIntoPaths(allStitches: Point[]): Point[][] {
+        const result: Point[][] = []
+        let path: Point[] = []
+        allStitches.forEach(stitch => {
+            if (isNaN(stitch.x)) {
+                result.push(path)
+                path = []
+            } else {
+                path.push(stitch)
+            }
+        })
+
+        if (path.length > 0) {
+            result.push(path)
+        }
+
+        return result
     }
 }

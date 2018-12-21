@@ -48,6 +48,8 @@ export class RenderService {
     render(shape: Shape): void {
         if (shape.fillType !== SatinFillType.None) {
             this.addStitchLinesToGroup(shape)
+        } else {
+            this.deleteStitchesFromGroup(shape)
         }
     }
 
@@ -157,15 +159,31 @@ export class RenderService {
         }
     }
 
+    private deleteStitchesFromGroup(shape: Shape): void {
+        const id = shape.element.getAttribute("id")
+        const nodesToRemove: ChildNode[] = []
+        this.stitchGroup.childNodes.forEach(node => {
+            if ((<SVGElement>node).getAttribute("id") === id) {
+                // Don't remove the nodes inside the loop as the childNodes array gets get confused
+                nodesToRemove.push(node)
+            }
+        })
+
+        nodesToRemove.forEach(node => node.remove())
+    }
+
     /**
      * Adds the lines representing the path of the stitching to the group.
      */
     private addStitchLinesToGroup(shape: Shape): void {
-        this.stitchesToPaths(shape.stitches).forEach(path => {
+        shape.stitches.forEach(stitches => {
+            console.log("Rendering", stitches.length, "stitches")
+            const path = this.stitchesToPath(stitches)
             const element = this.renderer.createElement("path", "svg") as SVGPathElement
             element.setAttribute("fill", "none")
             element.setAttribute("d", path)
             element.setAttribute("class", "stitchablePath")
+            element.setAttribute("id", shape.element.getAttribute("id")!)
             this.renderer.appendChild(this.stitchGroup, element)
         })
     }
@@ -207,24 +225,16 @@ export class RenderService {
     /**
      * Converts the stitch coords into an SVG path
      */
-    private stitchesToPaths(stitches: Point[]): string[] {
-        const paths: string[] = []
-        let path: string[] = []
+    private stitchesToPath(stitches: Point[]): string {
+        const path: string[] = []
         for (let i = 0; i < stitches.length; ++i) {
             if (path.length === 0) {
                 path.push(`M${stitches[i].x},${stitches[i].y} `)
-            } else if (isNaN(stitches[i].x)) {
-                // We need to start a new path
-                paths.push("".concat(...path))
-                path = []
             } else {
                 path.push(`L${stitches[i].x},${stitches[i].y} `)
             }
         }
 
-        if (path.length > 0) {
-            paths.push("".concat(...path))
-        }
-        return paths
+        return "".concat(...path)
     }
 }

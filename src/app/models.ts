@@ -8,7 +8,7 @@ export class Shape {
      */
     constructor(public element: SVGPathElement, public pathParts: PathPart[]) {}
 
-    stitches: Point[] = []
+    stitches: Point[][] = []
     fillType: SatinFillType = SatinFillType.None
 }
 
