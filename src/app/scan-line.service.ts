@@ -32,9 +32,8 @@ export class ScanLineService {
     generateScanLines(heightMM: number, shape: Shape, minStitchLengthMM: number): Intersections[][] {
         const elementBBox = shape.element.getBBox()
         const minStitchLength = minStitchLengthMM * this.scaling
-        const scanLineSeparation = this.calculateLineSeparation(elementBBox, heightMM * this.scaling)
 
-        const intersections = this.generateFullWidthScanLinePaths(scanLineSeparation, elementBBox)
+        const intersections = this.generateFullWidthScanLinePaths(heightMM * this.scaling, elementBBox)
             .map(path => this.stringToSVGElement(path, shape.element))
             .map(scanLine => this.getIntersections(shape, scanLine))
             .filter(intersections => intersections.length > 1)
@@ -213,15 +212,6 @@ export class ScanLineService {
     }
 
     /**
-     * Adjusts the line seperation so that it fits evenly between the top and bottom of the space otherwise you can
-     * get an gap on the top edge.
-     */
-    private calculateLineSeparation(bbox: DOMRect, height: number): number {
-        const counts = Math.floor(bbox.height / height)
-        return bbox.height / counts
-    }
-
-    /**
      * Generates paths that go from xmin to xmax across the width of the shape. We do this as a path rather than a line so that in the future we can generalise it
      * to use any path as a scanline
      */
@@ -229,9 +219,12 @@ export class ScanLineService {
         const paths: string[] = []
         const startX = bbox.x
         const endX = bbox.x + bbox.width
-        const numLines = bbox.height / separation + 1
+
+        // We want the scanlines to be horizontally aligned across all shapes so adjust the first scanline position
+        const startY = Math.floor(bbox.y / separation) * separation
+        const numLines = (bbox.height + bbox.y - startY) / separation + 1
         for (let i = 0; i < numLines; ++i) {
-            const y = i * separation + bbox.y
+            const y = i * separation + startY
             const line = `M${startX - 1},${y} L${endX + 1},${y}`
             paths.push(line)
         }
