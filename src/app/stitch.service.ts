@@ -16,7 +16,7 @@ const Bezier = require("bezier-js")
 })
 export class StitchService {
     // private static readonly ROW_HEIGHT = 0.4
-    private static readonly ROW_HEIGHT = 7
+    private static readonly ROW_HEIGHT = 0.4
     private static readonly STITCH_LENGTH = 3.5
     private static readonly MIN_STITCH_LENGTH = 1.5
 
@@ -162,11 +162,12 @@ export class StitchService {
         if (segmentIndexes.length === 1) {
             // The from and to points are on the same segment so we can just stitch from one to the other
             const currentSegment = segmentIndexes[0]
-            if (forward) {
-                stitches.push(...this.generateStitchesAlongElement(shape.pathParts[currentSegment].segment, from.segmentTValue, to.segmentTValue, stitchLength, false, false))
-            } else {
-                stitches.push(...this.generateStitchesAlongElement(shape.pathParts[currentSegment].segment, to.segmentTValue, from.segmentTValue, stitchLength, false, false))
-            }
+            // if (forward) {
+            stitches.push(...this.generateStitchesAlongElement(shape.pathParts[currentSegment].segment, from.segmentTValue, to.segmentTValue, stitchLength, false, false))
+            // } else {
+            // We probably need to do something here but haven't reproduced a problem with it yet
+            //     stitches.push(...this.generateStitchesAlongElement(shape.pathParts[currentSegment].segment, to.segmentTValue, from.segmentTValue, stitchLength, false, false))
+            // }
         } else if (forward) {
             // We need to move across more than one segment so start by stitching to the end of the first segment
             stitches.push(...this.generateStitchesAlongElement(shape.pathParts[from.segmentNumber].segment, from.segmentTValue, 1, stitchLength, false, true))
@@ -244,8 +245,8 @@ export class StitchService {
                     const fraction = fromTValue + ((toTValue - fromTValue) / (numStitches - 1)) * i
                     stitches.push({ x: coords[0].x + (coords[1].x - coords[0].x) * fraction, y: coords[0].y + (coords[1].y - coords[0].y) * fraction })
                 } else {
-                    const fraction = fromTValue - ((toTValue - fromTValue) / (numStitches - 1)) * i
-                    stitches.push({ x: coords[1].x + (coords[1].x - coords[0].x) * fraction, y: coords[1].y + (coords[1].y - coords[0].y) * fraction })
+                    const fraction = fromTValue - ((fromTValue - toTValue) / (numStitches - 1)) * i
+                    stitches.push({ x: coords[0].x + (coords[1].x - coords[0].x) * fraction, y: coords[0].y + (coords[1].y - coords[0].y) * fraction })
                 }
             }
         } else {
