@@ -496,9 +496,6 @@ export class AurifilRoyal implements Palette {
         C797: { name: "Silver Blue", number: "C797", value: "#000082" },
         C798: { name: "Grey", number: "C798", value: "#616161" },
         C799: { name: "Silver", number: "C799", value: "#c0c0c0" },
-        G001: { name: "Gold", number: "G001", value: "#ffff00" },
-        G002: { name: "Gold Sliver", number: "G002", value: "#dfdf00" },
-        S001: { name: "Silver", number: "S001", value: "#c0c0c0" },
         G001: { name: "Golden", number: "G001", value: "#e1e100" },
         G002: { name: "Gold", number: "G002", value: "#bfbf00" },
         S001: { name: "Silver", number: "S001", value: "#808080" }

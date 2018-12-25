@@ -12,7 +12,7 @@ export class Princess implements Palette {
         "1-7": { name: "Mid Blue", number: "1-7", value: "#5e8cb0" },
         "1-8": { name: "Red", number: "1-8", value: "#ff0003" },
         "1-9": { name: "Green", number: "1-9", value: "#297a1e" },
-        "1-10": { name: "Brown", number: "1-10", value: "#591717" },
+        "1-10": { name: "Cassis", number: "1-10", value: "#3f3566" },
         "2-1": { name: "Cream", number: "2-1", value: "#e8ddc0" },
         "2-2": { name: "Gold", number: "2-2", value: "#e38246" },
         "2-3": { name: "Light Brown", number: "2-3", value: "#b47253" },
@@ -22,7 +22,7 @@ export class Princess implements Palette {
         "2-7": { name: "Cyan", number: "2-7", value: "#0098a0" },
         "2-8": { name: "Dark Blue", number: "2-8", value: "#17328e" },
         "2-9": { name: "Olive", number: "2-9", value: "#3c4e2c" },
-        "2-10": { name: "Burgundy", number: "2-10", value: "#802426" },
+        "2-10": { name: "Marigold", number: "2-10", value: "#d65c30" },
         "3-1": { name: "Palest Ivory", number: "3-1", value: "#ede4d8" },
         "3-2": { name: "Palest Yellow", number: "3-2", value: "#e8d2a8" },
         "3-3": { name: "Palest Fawn", number: "3-3", value: "#e6c6b6" },
@@ -112,7 +112,6 @@ export class Princess implements Palette {
         "11-7": { name: "Imperial Purple", number: "11-7", value: "#5d3b7b" },
         "11-8": { name: "Amethyst", number: "11-8", value: "#8e5fc4" },
         "11-9": { name: "Deep Violet", number: "11-9", value: "#813a7e" },
-        "1-10": { name: "Cassis", number: "1-10", value: "#3f3566" },
         "12-1": { name: "Pale Lemon", number: "12-1", value: "#fef6c4" },
         "12-2": { name: "Mimosa", number: "12-2", value: "#f8bb55" },
         "12-3": { name: "Lime", number: "12-3", value: "#fbfb42" },
@@ -121,7 +120,6 @@ export class Princess implements Palette {
         "12-6": { name: "Golden Lights", number: "12-6", value: "#f5b422" },
         "12-7": { name: "Soleil", number: "12-7", value: "#ff7c1c" },
         "12-8": { name: "Golden Glory", number: "12-8", value: "#e1481c" },
-        "12-9": { name: "Sunburst", number: "12-9", value: "#d38347" },
-        "2-10": { name: "Marigold", number: "2-10", value: "#d65c30" }
+        "12-9": { name: "Sunburst", number: "12-9", value: "#d38347" }
     }
 }

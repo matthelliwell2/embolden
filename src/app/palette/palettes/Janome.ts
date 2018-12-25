@@ -3,15 +3,12 @@ import { Palette } from "../palette.service"
 export class Janome implements Palette {
     name = "Janome"
     colours = {
-        "001": { name: "White", number: "001", value: "#f0f0f0" },
-        "002": { name: "Black", number: "002", value: "#000000" },
-        "003": { name: "Gold", number: "003", value: "#e4c35d" },
         "201": { name: "Pink", number: "201", value: "#f669a0" },
-        "225": { name: "Red", number: "225", value: "#ff0000" },
+        "202": { name: "Vermilion", number: "202", value: "#ff4720" },
         "203": { name: "Orange", number: "203", value: "#ff6600" },
         "204": { name: "Yellow", number: "204", value: "#ffff17" },
         "205": { name: "Dark Brown", number: "205", value: "#481a05" },
-        "226": { name: "Green", number: "226", value: "#237336" },
+        "206": { name: "Bright Green", number: "206", value: "#00b552" },
         "207": { name: "Blue", number: "207", value: "#0b2f84" },
         "208": { name: "Purple", number: "208", value: "#ab5a96" },
         "209": { name: "Pale Violet", number: "209", value: "#ac9cc7" },
@@ -27,6 +24,11 @@ export class Janome implements Palette {
         "219": { name: "Olive Green", number: "219", value: "#2f5933" },
         "220": { name: "Silver Gray", number: "220", value: "#e5e5e5" },
         "221": { name: "Gray", number: "221", value: "#889b9b" },
+        "222": { name: "Ocean Blue", number: "222", value: "#0257b5" },
+        "223": { name: "Beige Gray", number: "223", value: "#d0bab0" },
+        "224": { name: "Bamboo", number: "224", value: "#e3be81" },
+        "225": { name: "Red", number: "225", value: "#ff0000" },
+        "226": { name: "Green", number: "226", value: "#237336" },
         "227": { name: "Pale Aqua", number: "227", value: "#98d6bd" },
         "228": { name: "Baby Blue", number: "228", value: "#b2e1e3" },
         "229": { name: "Powder Blue", number: "229", value: "#98f3fe" },
@@ -54,11 +56,6 @@ export class Janome implements Palette {
         "251": { name: "Peacock Green", number: "251", value: "#04917b" },
         "252": { name: "Dark Gray", number: "252", value: "#595b61" },
         "253": { name: "Ivory White", number: "253", value: "#ffffdc" },
-        "202": { name: "Vermilion", number: "202", value: "#ff4720" },
-        "206": { name: "Bright Green", number: "206", value: "#00b552" },
-        "222": { name: "Ocean Blue", number: "222", value: "#0257b5" },
-        "223": { name: "Beige Gray", number: "223", value: "#d0bab0" },
-        "224": { name: "Bamboo", number: "224", value: "#e3be81" },
         "254": { name: "Hazel", number: "254", value: "#e6651e" },
         "255": { name: "Toast", number: "255", value: "#e6965a" },
         "256": { name: "Salmon", number: "256", value: "#f09c96" },
@@ -80,6 +77,9 @@ export class Janome implements Palette {
         "272": { name: "Old Gold", number: "272", value: "#c79732" },
         "273": { name: "Honey Dew", number: "273", value: "#ff9d00" },
         "274": { name: "Tangerine", number: "274", value: "#ffba5e" },
-        "275": { name: "Canary Yellow", number: "275", value: "#fcf121" }
+        "275": { name: "Canary Yellow", number: "275", value: "#fcf121" },
+        "001": { name: "White", number: "001", value: "#f0f0f0" },
+        "002": { name: "Black", number: "002", value: "#000000" },
+        "003": { name: "Gold", number: "003", value: "#e4c35d" }
     }
 }

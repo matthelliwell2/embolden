@@ -8,5 +8,10 @@
         <ngb-tab title="Objects">
             <ng-template ngbTabContent> <div class="box">Objects tab content</div> </ng-template>
         </ngb-tab>
+        <ngb-tab title="Threads">
+            <ng-template ngbTabContent>
+                <div class="box" [style.height]="'calc(99.9vh - ' + tabTitleHeight + 'px)'"><app-threads></app-threads></div>
+            </ng-template>
+        </ngb-tab>
     </ngb-tabset>
 </div>

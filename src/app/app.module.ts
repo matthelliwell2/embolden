@@ -16,11 +16,12 @@ import { Ng5SliderModule } from "ng5-slider"
 import { ColorChromeModule } from "ngx-color/chrome"
 import { SettingsService } from "./settings.service"
 import { NgxToggleModule } from "ngx-toggle"
+import { ThreadsComponent } from "./threads/threads.component"
 
 library.add(faFolderOpen, faBold, faWindowRestore, faSlidersH)
 
 @NgModule({
-    declarations: [AppComponent, EditComponent, ToolbarComponent, PropertiesBarComponent, StitchControlComponent, SettingsComponent, RenderSettingsComponent],
+    declarations: [AppComponent, EditComponent, ToolbarComponent, PropertiesBarComponent, StitchControlComponent, SettingsComponent, RenderSettingsComponent, ThreadsComponent],
     imports: [BrowserModule, NgbModule, FontAwesomeModule, FormsModule, Ng5SliderModule, ColorChromeModule, NgxToggleModule],
     providers: [SettingsService],
     bootstrap: [AppComponent],

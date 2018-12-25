@@ -9,7 +9,7 @@
         "testDebug": "node -r ts-node/register %NODE_DEBUG_OPTION% ./node_modules/jasmine/bin/jasmine.js",
         "lint": "ng lint",
         "e2e": "ng e2e",
-        "convert": "node -r ts-node/register -e require('./src/palette/gimpToEmboldenPalette')"
+        "convert": "node -r ts-node/register -e require('./src/app/palette/gimpToEmboldenPalette').gimpToEmboldenPalette('./src/app/palette/palettes')"
     },
     "private": true,
     "dependencies": {
@@ -71,7 +71,7 @@
         "tslint": "^5.11.0",
         "tslint-microsoft-contrib": "^5.2.1",
         "tslint-sonarts": "^1.8.0",
-        "typescript": "^3.2.2"
+        "typescript": "3.1.6"
     },
     "prettier": {
         "printWidth": 180,

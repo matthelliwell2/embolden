@@ -158,6 +158,10 @@ export class PaletteService {
     get paletteNames(): string[] {
         return Object.keys(this.allPalettes)
     }
+
+    getPalette(name: string): Palette | undefined {
+        return this.allPalettes[name]
+    }
 }
 
 export interface Palette {

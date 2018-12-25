@@ -7,6 +7,7 @@ import * as fs from "fs"
  */
 export const gimpToEmboldenPalette = (dir: string): void => {
     console.log("Processing directory", dir)
+
     fs.readdirSync(dir)
         .filter(name => name.endsWith(".gpl"))
         .map(name => `${dir}/${name}`)
@@ -19,10 +20,15 @@ export const gimpToEmboldenPalette = (dir: string): void => {
 
             const paletteName = toPaletteName(input[1])
 
-            const colours = input
+            const colours: { [key: string]: Colour } = {}
+            input
                 .slice(4)
                 .filter(line => line.length > 0)
                 .map(toColour)
+                .forEach(colour => (colours[colour.number] = colour))
+
+            const coloursStr = Object.keys(colours)
+                .map(colourNumber => colours[colourNumber])
                 .map(toColourStringMap)
                 .join(",\n")
 
@@ -32,7 +38,7 @@ import { Palette } from "../palette.service"
 
 export class ${className} implements Palette {
     name = '${paletteName}'
-    colours = {${colours}}
+    colours = {${coloursStr}}
 }
 `
             const outputName = className.trim().replace(/ /g, "")

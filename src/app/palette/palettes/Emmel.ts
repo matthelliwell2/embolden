@@ -339,7 +339,7 @@ export class Emmel implements Palette {
         "1335": { name: "Pale Yellow", number: "1335", value: "#ffee86" },
         "1336": { name: "Warm Yellow", number: "1336", value: "#ffd855" },
         "1337": { name: "Cantaloupe", number: "1337", value: "#fcba40" },
-        "1338": { name: "Scholastic", number: "1338", value: "#ffc04f" },
+        "1338": { name: "Angel Blue", number: "1338", value: "#edf4ec" },
         "1339": { name: "Pale Lemon", number: "1339", value: "#ffffcf" },
         "1340": { name: "Pale Yellow", number: "1340", value: "#fff4ae" },
         "1341": { name: "Glow", number: "1341", value: "#e5ba85" },
@@ -416,7 +416,6 @@ export class Emmel implements Palette {
         "1413": { name: "Antique Mauve", number: "1413", value: "#ddbbb9" },
         "1415": { name: "Orchid", number: "1415", value: "#e3bac0" },
         "1416": { name: "Silver Fox", number: "1416", value: "#b49cb2" },
-        L1417: { name: "Purple Haze", number: "L1417", value: "#8f678c" },
         "1418": { name: "Dark Purple", number: "1418", value: "#433a71" },
         "1419": { name: "Royal Purple", number: "1419", value: "#4e1d4a" },
         "1420": { name: "Dark Brown", number: "1420", value: "#341c2a" },
@@ -436,7 +435,6 @@ export class Emmel implements Palette {
         "1435": { name: "Rockport Blue", number: "1435", value: "#98a5b8" },
         "1436": { name: "Velvet Morning", number: "1436", value: "#60647f" },
         "1437": { name: "Ash", number: "1437", value: "#3c4f70" },
-        "1338": { name: "Angel Blue", number: "1338", value: "#edf4ec" },
         "1439": { name: "White Sand", number: "1439", value: "#e2e3dd" },
         "1440": { name: "Steel Gray medium", number: "1440", value: "#898d90" },
         "1441": { name: "Dk Granite", number: "1441", value: "#6a7571" },
@@ -523,6 +521,7 @@ export class Emmel implements Palette {
         "1522": { name: "Winter White", number: "1522", value: "#fffff2" },
         "1523": { name: "Pale Gold", number: "1523", value: "#ffedab" },
         "1524": { name: "Ash Blonde", number: "1524", value: "#cab69b" },
-        "1525": { name: "Espresso", number: "1525", value: "#0d0e09" }
+        "1525": { name: "Espresso", number: "1525", value: "#0d0e09" },
+        L1417: { name: "Purple Haze", number: "L1417", value: "#8f678c" }
     }
 }
