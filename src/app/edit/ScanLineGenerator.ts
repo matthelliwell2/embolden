@@ -1,8 +1,10 @@
 import { Injectable, Renderer2, RendererFactory2 } from "@angular/core"
 import * as svgIntersections from "svg-intersections"
-import { Intersection, Intersections, Point, Shape } from "./models"
-import * as Lib from "./lib/lib"
-import { PubSubService } from "./pub-sub.service"
+import { Intersection, Intersections, Point, Shape } from "../models"
+import * as Lib from "../lib/lib"
+import { Events, EventService, FileLoadedEvent } from "../event.service"
+import { Destroyable } from "../lib/Store"
+import { filter, map, takeUntil } from "rxjs/operators"
 
 /**
  * This class is responsible for generate scan lines across an arbitrary shape.
@@ -10,19 +12,24 @@ import { PubSubService } from "./pub-sub.service"
 @Injectable({
     providedIn: "root"
 })
-export class ScanLineService {
+export class ScanLineGenerator extends Destroyable {
     private readonly renderer: Renderer2
     private scaling: number
     private readonly intersect = svgIntersections.intersect
     private readonly shape = svgIntersections.shape
 
-    constructor(rendererFactory: RendererFactory2, private pubSubService: PubSubService) {
+    constructor(rendererFactory: RendererFactory2, private eventService: EventService) {
+        super()
         this.renderer = rendererFactory.createRenderer(null, null)
-        this.pubSubService.subscribe(this)
-    }
 
-    onFileLoaded(file: { svg: SVGSVGElement; scaling: number }) {
-        this.scaling = file.scaling
+        this.eventService
+            .getStream()
+            .pipe(
+                takeUntil(this.destroyed),
+                filter(event => event.event === Events.FILE_LOADED),
+                map(event => event as FileLoadedEvent)
+            )
+            .subscribe(event => (this.scaling = event.scaling))
     }
 
     /**

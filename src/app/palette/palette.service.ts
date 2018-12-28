@@ -1,4 +1,4 @@
-import { Injectable } from "@angular/core"
+import { Injectable, OnDestroy } from "@angular/core"
 
 import { AdmelodyPolyester } from "./palettes/AdmelodyPolyester"
 import { AdmelodyRayon } from "./palettes/AdmelodyRayon"
@@ -76,7 +76,7 @@ import { RobisonAntonRayon } from "./palettes/RobisonAntonRayon"
 @Injectable({
     providedIn: "root"
 })
-export class PaletteService {
+export class PaletteService implements OnDestroy {
     constructor() {
         this.addPalette(new AdmelodyPolyester())
         this.addPalette(new AdmelodyRayon())
@@ -161,6 +161,10 @@ export class PaletteService {
 
     getPalette(name: string): Palette | undefined {
         return this.allPalettes[name]
+    }
+
+    ngOnDestroy(): void {
+        console.log("OnDestroy PaletteService")
     }
 }
 

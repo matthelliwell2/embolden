@@ -1,9 +1,11 @@
 import { Injectable } from "@angular/core"
-import { ScanLineService } from "./scan-line.service"
-import { Intersection, Intersections, Point, SatinFillType, Shape } from "./models"
-import * as Lib from "./lib/lib"
-import { OptimiserService } from "./optimiser.service"
-import { PubSubService } from "./pub-sub.service"
+import { Intersection, Intersections, Point, SatinFillType, Shape } from "../models"
+import * as Lib from "../lib/lib"
+import { OptimiserService } from "../optimiser.service"
+import { Events, EventService, FileLoadedEvent } from "../event.service"
+import { Destroyable } from "../lib/Store"
+import { filter, map, takeUntil } from "rxjs/operators"
+import { ScanLineGenerator } from "./ScanLineGenerator"
 
 const Bezier = require("bezier-js")
 
@@ -14,7 +16,7 @@ const Bezier = require("bezier-js")
 @Injectable({
     providedIn: "root"
 })
-export class StitchService {
+export class StitchGenerator extends Destroyable {
     // private static readonly ROW_HEIGHT = 0.4
     private static readonly ROW_HEIGHT = 0.4
     private static readonly STITCH_LENGTH = 3.5
@@ -22,12 +24,16 @@ export class StitchService {
 
     private scaling: number
 
-    constructor(private scanLineService: ScanLineService, private optimiserService: OptimiserService, private pubSubService: PubSubService) {
-        this.pubSubService.subscribe(this)
-    }
-
-    onFileLoaded(file: { svg: SVGSVGElement; scaling: number }) {
-        this.scaling = file.scaling
+    constructor(private scanLineGenerator: ScanLineGenerator, private optimiserService: OptimiserService, private eventService: EventService) {
+        super()
+        this.eventService
+            .getStream()
+            .pipe(
+                takeUntil(this.destroyed),
+                filter(event => event.event === Events.FILE_LOADED),
+                map(event => event as FileLoadedEvent)
+            )
+            .subscribe(event => (this.scaling = event.scaling))
     }
 
     fill(shape: Shape): void {
@@ -38,7 +44,7 @@ export class StitchService {
 
         this.closePath(shape.element)
 
-        const scanLines = this.scanLineService.generateScanLines(StitchService.ROW_HEIGHT, shape, StitchService.MIN_STITCH_LENGTH)
+        const scanLines = this.scanLineGenerator.generateScanLines(StitchGenerator.ROW_HEIGHT, shape, StitchGenerator.MIN_STITCH_LENGTH)
         const optimisedScanLines = this.optimiserService.optimise(shape, scanLines)
 
         this.generateStitches(shape, optimisedScanLines)
@@ -56,8 +62,8 @@ export class StitchService {
 
     private generateStitches(shape: Shape, allScanLines: Intersections[][]) {
         let allStitches: Point[] = []
-        const stitchLength = StitchService.STITCH_LENGTH * this.scaling
-        const minStitchLength = StitchService.MIN_STITCH_LENGTH * this.scaling
+        const stitchLength = StitchGenerator.STITCH_LENGTH * this.scaling
+        const minStitchLength = StitchGenerator.MIN_STITCH_LENGTH * this.scaling
 
         let previousColumnOfScanLines: Intersections[] | undefined = undefined
         let count = 0

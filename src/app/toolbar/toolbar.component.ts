@@ -1,7 +1,7 @@
 import { Component, HostListener, OnInit, ViewChild } from "@angular/core"
 import { NgbModal } from "@ng-bootstrap/ng-bootstrap"
 import { SettingsComponent } from "../settings/settings.component"
-import { PubSubService } from "../pub-sub.service"
+import { CommandService, LoadFileCommand } from "../command.service"
 
 @Component({
     selector: "app-toolbar",
@@ -20,7 +20,7 @@ export class ToolbarComponent implements OnInit {
     // This is a reference to the hidden input type='file' component
     @ViewChild("file") file
 
-    constructor(private pubSubService: PubSubService, private modalService: NgbModal) {}
+    constructor(private commandService: CommandService, private modalService: NgbModal) {}
 
     ngOnInit() {}
 
@@ -35,7 +35,7 @@ export class ToolbarComponent implements OnInit {
      * Called by the file selection dialog when we've got a file to load
      */
     onFilesAdded() {
-        this.pubSubService.publish("LoadFile", this.file.nativeElement.files[0])
+        this.commandService.sendCommand(new LoadFileCommand(this.file.nativeElement.files[0]))
     }
 
     /**

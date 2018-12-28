@@ -1,13 +1,12 @@
 import { ElementRef, Injectable } from "@angular/core"
 import * as uuid from "uuid/v4"
-import { PubSubService } from "./pub-sub.service"
 import * as xmldoc from "xmldoc"
 import * as svgpath from "svgpath"
 
 const transform = require("svg-flatten/src/transform.js")
 const pathify = require("svg-flatten/src/pathify.js")
 
-// Nasty shim to get xmldoc.toString to work. Needs moving to polyfills.ts
+// TODO Nasty shim to get xmldoc.toString to work. Needs moving to polyfills.ts
 Object.defineProperty(Array.prototype, "toStringWithIndent", {
     value: function(indent, options) {
         const s = this.map(e => e.toStringWithIndent(indent, options))
@@ -21,10 +20,8 @@ Object.defineProperty(Array.prototype, "toStringWithIndent", {
 @Injectable({
     providedIn: "root"
 })
-export class FileService {
-    constructor(private pubSubService: PubSubService) {
-        console.log("file service")
-    }
+export class FileLoader {
+    constructor() {}
 
     /**
      * Loads the specified file and does some initial processing on it.
@@ -45,8 +42,6 @@ export class FileService {
             throw new Error("Cannot support different x and y scaling factors.")
         }
 
-        // The scaling factor converts from element coords to viewbox (mm) coords. As we have flatten the file this is the only scale factor we need.
-        this.pubSubService.publish("FileLoaded", { svg: svg, scaling: scalingWidth })
         return { svg: svg, scaling: scalingWidth }
     }
 

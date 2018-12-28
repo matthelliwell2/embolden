@@ -14,16 +14,18 @@ import { SettingsComponent } from "./settings/settings.component"
 import { RenderSettingsComponent } from "./settings/render-settings/render-settings.component"
 import { Ng5SliderModule } from "ng5-slider"
 import { ColorChromeModule } from "ngx-color/chrome"
-import { SettingsService } from "./settings.service"
 import { NgxToggleModule } from "ngx-toggle"
 import { ThreadsComponent } from "./threads/threads.component"
+import { RenderSettingsStore } from "./settings/render-settings/RenderSettingsStore"
+import { CommandService } from "./command.service"
+import { EventService } from "./event.service"
 
 library.add(faFolderOpen, faBold, faWindowRestore, faSlidersH)
 
 @NgModule({
     declarations: [AppComponent, EditComponent, ToolbarComponent, PropertiesBarComponent, StitchControlComponent, SettingsComponent, RenderSettingsComponent, ThreadsComponent],
     imports: [BrowserModule, NgbModule, FontAwesomeModule, FormsModule, Ng5SliderModule, ColorChromeModule, NgxToggleModule],
-    providers: [SettingsService],
+    providers: [RenderSettingsStore, CommandService, EventService],
     bootstrap: [AppComponent],
     entryComponents: [SettingsComponent]
 })

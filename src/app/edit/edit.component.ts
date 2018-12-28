@@ -1,7 +1,10 @@
 import * as svgPanZoom from "svg-pan-zoom"
-import { Component, ElementRef, NgZone, OnDestroy, OnInit, Renderer2, ViewChild } from "@angular/core"
-import { PubSubService } from "../pub-sub.service"
-import { FileService } from "../file.service"
+import { Component, ElementRef, NgZone, OnInit, Renderer2, ViewChild } from "@angular/core"
+import { Commands, CommandService } from "../command.service"
+import { Destroyable } from "../lib/Store"
+import { filter, takeUntil } from "rxjs/operators"
+import { FileLoader } from "./FileLoader"
+import { ElementDeselectedEvent, ElementSelectedEvent, EventService, FileLoadedEvent } from "../event.service"
 
 /**
  * This component is the central component that renders the svg and lets the user edit stitches.
@@ -11,7 +14,7 @@ import { FileService } from "../file.service"
     templateUrl: "./edit.component.html",
     styleUrls: ["./edit.component.css"]
 })
-export class EditComponent implements OnInit, OnDestroy {
+export class EditComponent extends Destroyable implements OnInit {
     private svg: SVGSVGElement
     private group: SVGGElement
 
@@ -20,29 +23,37 @@ export class EditComponent implements OnInit, OnDestroy {
     private selectedElement: SVGGraphicsElement | undefined
     @ViewChild("container") container: ElementRef
 
-    constructor(private pubSubService: PubSubService, private fileService: FileService, private zone: NgZone, private renderer: Renderer2) {}
+    constructor(private commandService: CommandService, private eventService: EventService, private fileLoader: FileLoader, private zone: NgZone, private renderer: Renderer2) {
+        super()
+    }
 
     ngOnInit() {
-        this.pubSubService.subscribe(this)
+        this.commandService
+            .getStream()
+            .pipe(
+                takeUntil(this.destroyed),
+                filter(command => command.command === Commands.LOAD_FILE)
+            )
+            .subscribe(command => this.loadFile(command.file))
     }
 
-    ngOnDestroy(): void {
-        this.pubSubService.unsubscribe(this)
-    }
-
-    async onLoadFile(file: File) {
+    async loadFile(file: File) {
         this.selectedElement = undefined
         this.selectionRect1 = undefined
         this.selectionRect2 = undefined
 
-        const result = await this.fileService.loadFile(this.container, file)
+        const result = await this.fileLoader.loadFile(this.container, file)
+
         this.svg = result.svg
 
-        // Set the height to 100% so canval fill the available height
+        // The scaling factor converts from element coords to viewbox (mm) coords. As we have flattened the file this is the only scale factor we need.
+        this.eventService.sendEvent(new FileLoadedEvent(result.svg, result.scaling))
+        // this.pubSubService.publish("FileLoaded", { svg: result.svg, scaling: result.scaling })
+
+        // Set the height to 100% so the canvas will fill the available height
         this.svg.setAttribute("height", "100%")
 
-        const zoomControl = svgPanZoom(this.svg, { controlIconsEnabled: true })
-        console.log(zoomControl.getSizes())
+        svgPanZoom(this.svg, { controlIconsEnabled: true })
 
         this.group = this.svg.querySelector(".svg-pan-zoom_viewport") as SVGGElement
 
@@ -51,11 +62,11 @@ export class EditComponent implements OnInit, OnDestroy {
 
     private readonly onClick = (event: MouseEvent) => {
         this.zone.run(() => {
-            this.select(event.target as SVGGraphicsElement)
+            this.select(event.target as SVGPathElement)
         })
     }
 
-    private select(element: SVGGraphicsElement) {
+    private select(element: SVGPathElement) {
         if (element.classList.contains("stitchableElement") || element.nodeName === "svg") {
             this.unselect()
         }
@@ -85,7 +96,7 @@ export class EditComponent implements OnInit, OnDestroy {
             this.renderer.addClass(this.selectionRect2, "selection-rect2")
             this.renderer.appendChild(this.group, this.selectionRect2)
 
-            this.pubSubService.publish("ElementSelected", element)
+            this.eventService.sendEvent(new ElementSelectedEvent(element))
         }
     }
 
@@ -104,6 +115,6 @@ export class EditComponent implements OnInit, OnDestroy {
             this.selectionRect2 = undefined
         }
 
-        this.pubSubService.publish("ElementDeselected")
+        this.eventService.sendEvent(new ElementDeselectedEvent())
     }
 }

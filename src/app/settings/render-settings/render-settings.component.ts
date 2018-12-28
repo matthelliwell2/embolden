@@ -1,8 +1,7 @@
-import { Component, EventEmitter, OnInit } from "@angular/core"
+import { AfterViewInit, Component, EventEmitter } from "@angular/core"
 import { Options } from "ng5-slider"
 import { ColorEvent } from "ngx-color"
-import { PubSubService } from "../../pub-sub.service"
-import { RenderSettings, SettingsService } from "../../settings.service"
+import { RenderSettings, RenderSettingsStore } from "./RenderSettingsStore"
 
 /**
  * Component that allows user to config how the stitches and shapes are rendered on the screen. None of this affects the generation of the actual stitches.
@@ -12,13 +11,12 @@ import { RenderSettings, SettingsService } from "../../settings.service"
     templateUrl: "./render-settings.component.html",
     styleUrls: ["./render-settings.component.css"]
 })
-export class RenderSettingsComponent implements OnInit {
+export class RenderSettingsComponent implements AfterViewInit {
     manualRefresh: EventEmitter<void> = new EventEmitter<void>()
     private readonly renderSettings: RenderSettings
 
-    constructor(private pubSubService: PubSubService, settingsService: SettingsService) {
-        this.pubSubService.subscribe(this)
-        this.renderSettings = settingsService.renderSettings
+    constructor(private store: RenderSettingsStore) {
+        this.renderSettings = store.state
     }
 
     strokeWidthSliderOptions: Options = {
@@ -35,36 +33,32 @@ export class RenderSettingsComponent implements OnInit {
         precisionLimit: 3
     }
 
-    ngOnInit() {}
-
     // The slider doesn't draw properly for some reason. Forcing a refresh fixes it.
     ngAfterViewInit() {
         this.manualRefresh.emit()
     }
-
-    ngOnDestroy(): void {
-        this.pubSubService.unsubscribe(this)
-    }
+    a
 
     onStrokeWidthChangeComplete(): void {
-        this.pubSubService.publish("RenderSettingsChanged", this.renderSettings)
+        this.store.state = this.renderSettings
     }
 
     onMarkerSizeChangeComplete(): void {
-        this.pubSubService.publish("RenderSettingsChanged", this.renderSettings)
+        this.store.state = this.renderSettings
     }
 
     onColourChangeComplete(event: ColorEvent): void {
         this.renderSettings.colour = event.color.hex
-        this.pubSubService.publish("RenderSettingsChanged", this.renderSettings)
+        this.store.state = this.renderSettings
     }
 
     set showMarkers(show: boolean) {
         if (this.renderSettings) {
             this.renderSettings.showMarkers = show
-            this.pubSubService.publish("RenderSettingsChanged", this.renderSettings)
+            this.store.state = this.renderSettings
         }
     }
+
     get showMarkers(): boolean {
         return this.renderSettings.showMarkers
     }

@@ -1,7 +1,9 @@
 import { Injectable, Renderer2, RendererFactory2 } from "@angular/core"
-import { Point, SatinFillType, Shape } from "./models"
-import { PubSubService } from "./pub-sub.service"
-import { RenderSettings, SettingsService } from "./settings.service"
+import { Point, SatinFillType, Shape } from "../models"
+import { filter, map, takeUntil } from "rxjs/operators"
+import { Destroyable } from "../lib/Store"
+import { RenderSettings, RenderSettingsStore } from "../settings/render-settings/RenderSettingsStore"
+import { Events, EventService, FileLoadedEvent } from "../event.service"
 
 /**
  * This is responsible for rendering an image of the stitches onto the screen
@@ -9,7 +11,7 @@ import { RenderSettings, SettingsService } from "./settings.service"
 @Injectable({
     providedIn: "root"
 })
-export class RenderService {
+export class Renderer extends Destroyable {
     private stitchGroup: SVGGElement
     private scaling: number
     private svg: SVGSVGElement
@@ -20,24 +22,35 @@ export class RenderService {
     private markerCircle: SVGMarkerElement
     private markerSolidCircle: SVGMarkerElement
 
-    constructor(private pubSubService: PubSubService, rendererFactory: RendererFactory2, settingsService: SettingsService) {
+    constructor(private eventService: EventService, rendererFactory: RendererFactory2, private renderSettingsStore: RenderSettingsStore) {
+        super()
         this.renderer = rendererFactory.createRenderer(null, null)
-        this.renderSettings = settingsService.renderSettings
-        this.pubSubService.subscribe(this)
+        this.renderSettings = renderSettingsStore.state
+
+        this.eventService
+            .getStream()
+            .pipe(
+                takeUntil(this.destroyed),
+                filter(event => event.event === Events.FILE_LOADED),
+                map(event => event as FileLoadedEvent)
+            )
+            .subscribe(event => this.onFileLoaded(event.root, event.scaling))
+
+        this.renderSettingsStore.stream.pipe(takeUntil(this.destroyed)).subscribe(this.onRenderSettingsChanged)
     }
 
-    onFileLoaded(file: { svg: SVGSVGElement; scaling: number }) {
-        this.scaling = file.scaling
-        this.svg = file.svg
+    onFileLoaded = (svg: SVGSVGElement, scaling: number) => {
+        this.scaling = scaling
+        this.svg = svg
 
-        this.deleteCssDefs(file.svg)
-        this.deleteMarkerDefs(file.svg)
+        this.deleteCssDefs(svg)
+        this.deleteMarkerDefs(svg)
 
         this.addMarkers()
         this.createStitchGroup()
     }
 
-    onRenderSettingsChanged(settings: RenderSettings) {
+    onRenderSettingsChanged = (settings: RenderSettings) => {
         this.renderSettings = settings
         this.setRenderAttributes()
     }
@@ -201,7 +214,7 @@ export class RenderService {
         this.renderer.appendChild(this.svg, this.stitchGroup)
     }
 
-    private setRenderAttributes(): void {
+    private setRenderAttributes = (): void => {
         const strokeWidth = this.renderSettings.strokeWidth * this.scaling
 
         if (this.stitchGroup) {

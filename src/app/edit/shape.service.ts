@@ -1,17 +1,20 @@
 import { Injectable, Renderer2, RendererFactory2 } from "@angular/core"
-import { PathPart, Shape } from "./models"
+import { PathPart, Shape } from "../models"
 import * as svgpath from "svgpath"
-import { PubSubService } from "./pub-sub.service"
+import { Events, EventService } from "../event.service"
+import { takeUntil } from "rxjs/operators"
+import { Destroyable } from "../lib/Store"
 import Point = SvgPanZoom.Point
 
 /**
- * This service keeps track of which elements are filled with which stitches. It just hold state without any logic.
+ * This service keeps track of the state of the stitching so far.
  */
 @Injectable({
     providedIn: "root"
 })
-export class ShapeService {
+export class ShapeService extends Destroyable {
     private readonly renderer: Renderer2
+    private _selectedShape: Shape | undefined = undefined
 
     /**
      * A map of element id to the stitching properties of that element. This acts as the central control structure for
@@ -19,9 +22,26 @@ export class ShapeService {
      */
     readonly shapes: Map<string, Shape> = new Map()
 
-    constructor(private pubSubService: PubSubService, rendererFactory: RendererFactory2) {
+    constructor(rendererFactory: RendererFactory2, private eventService: EventService) {
+        super()
         this.renderer = rendererFactory.createRenderer(null, null)
-        this.pubSubService.subscribe(this)
+
+        this.eventService
+            .getStream()
+            .pipe(takeUntil(this.destroyed))
+            .subscribe(event => {
+                switch (event.event) {
+                    case Events.FILE_LOADED:
+                        this.onFileLoaded()
+                        break
+                    case Events.ELEMENT_SELECTED:
+                        this.onElementSelected(event.element)
+                        break
+                    case Events.ELEMENT_DESELECTED:
+                        this.onElementDeselected()
+                        break
+                }
+            })
     }
 
     getShape(element: SVGPathElement): Shape {
@@ -35,9 +55,22 @@ export class ShapeService {
         return this.shapes.get(id)!
     }
 
-    onFileLoaded() {
+    onFileLoaded = () => {
         // We've loaded a new file so clear down the cache of shapes from the previous file
         this.shapes.clear()
+        this._selectedShape = undefined
+    }
+
+    onElementSelected(element: SVGPathElement) {
+        this._selectedShape = this.getShape(element)
+    }
+
+    onElementDeselected() {
+        this._selectedShape = undefined
+    }
+
+    get selectedShape(): Shape | undefined {
+        return this._selectedShape
     }
 
     /**
