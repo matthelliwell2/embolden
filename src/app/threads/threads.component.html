@@ -1,6 +1,7 @@
 <div class="pt-3 pl-3">
     <div ngbDropdown class="d-inline-block">
-        <label class="mr-3">Palette:</label> <button class="btn btn-outline-primary" id="palette" ngbDropdownToggle>{{ currentPalette.name }}</button>
+        <label class="mr-3">Palette:</label>
+        <button class="btn btn-outline-primary" id="palette" ngbDropdownToggle>{{ designService.selectedPalette ? designService.selectedPalette.name : "Please select" }}</button>
         <div ngbDropdownMenu aria-labelledby="palette" class="dropdown-menu">
             <button *ngFor="let name of paletteService.paletteNames" class="dropdown-item" (click)="onPaletteSelected(name)">{{ name }}</button>
         </div>

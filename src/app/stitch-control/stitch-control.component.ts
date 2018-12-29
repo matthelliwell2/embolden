@@ -1,8 +1,7 @@
 import { Component } from "@angular/core"
 import { SatinFillType } from "../models"
-import { ShapeService } from "../edit/shape.service"
-import { Renderer } from "../edit/Renderer"
-import { StitchGenerator } from "../edit/StitchGenerator"
+import { CommandService, FillSelectedShapeCommand } from "../command.service"
+import { DesignService } from "../design.service"
 
 @Component({
     selector: "app-stitch-control",
@@ -12,11 +11,9 @@ import { StitchGenerator } from "../edit/StitchGenerator"
 export class StitchControlComponent {
     fillTypes = Object.keys(SatinFillType)
 
-    constructor(private stitchGenerator: StitchGenerator, private renderer: Renderer, private shapeService: ShapeService) {}
+    constructor(private commandService: CommandService, public designService: DesignService) {}
 
     onFillTypeSelected(type: string) {
-        this.shapeService.selectedShape!.fillType = SatinFillType[type]
-        this.stitchGenerator.fill(this.shapeService.selectedShape!)
-        this.renderer.render(this.shapeService.selectedShape!)
+        this.commandService.sendCommand(new FillSelectedShapeCommand(SatinFillType[type]))
     }
 }

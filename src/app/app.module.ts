@@ -19,13 +19,14 @@ import { ThreadsComponent } from "./threads/threads.component"
 import { RenderSettingsStore } from "./settings/render-settings/RenderSettingsStore"
 import { CommandService } from "./command.service"
 import { EventService } from "./event.service"
+import { DesignService } from "./design.service"
 
 library.add(faFolderOpen, faBold, faWindowRestore, faSlidersH)
 
 @NgModule({
     declarations: [AppComponent, EditComponent, ToolbarComponent, PropertiesBarComponent, StitchControlComponent, SettingsComponent, RenderSettingsComponent, ThreadsComponent],
     imports: [BrowserModule, NgbModule, FontAwesomeModule, FormsModule, Ng5SliderModule, ColorChromeModule, NgxToggleModule],
-    providers: [RenderSettingsStore, CommandService, EventService],
+    providers: [RenderSettingsStore, CommandService, EventService, DesignService],
     bootstrap: [AppComponent],
     entryComponents: [SettingsComponent]
 })

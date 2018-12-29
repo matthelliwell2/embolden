@@ -1,6 +1,6 @@
-<div *ngIf="shapeService.selectedShape" class="pt-3 pl-3">
+<div *ngIf="designService.selectedShape" class="pt-3 pl-3">
     <div ngbDropdown class="d-inline-block">
-        <label class="mr-3">Satin Fill:</label> <button class="btn btn-outline-primary" id="fillType" ngbDropdownToggle>{{ shapeService.selectedShape!.fillType }}</button>
+        <label class="mr-3">Satin Fill:</label> <button class="btn btn-outline-primary" id="fillType" ngbDropdownToggle>{{ designService.selectedShape!.fillType }}</button>
         <div ngbDropdownMenu aria-labelledby="fillType" class="dropdown-menu">
             <button *ngFor="let type of fillTypes" class="dropdown-item" (click)="onFillTypeSelected(type)">{{ type }}</button>
         </div>

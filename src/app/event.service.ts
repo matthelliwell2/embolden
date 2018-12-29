@@ -1,5 +1,6 @@
 import { Injectable } from "@angular/core"
 import { Observable, Subject } from "rxjs"
+import { Palette } from "./palette/palette.service"
 
 /**
  * Exposes observable against which the system can publish events.
@@ -24,7 +25,8 @@ export class EventService {
 export enum Events {
     FILE_LOADED,
     ELEMENT_SELECTED,
-    ELEMENT_DESELECTED
+    ELEMENT_DESELECTED,
+    PALETTE_SELECTED
 }
 
 export class FileLoadedEvent {
@@ -51,4 +53,13 @@ export class ElementDeselectedEvent {
     readonly event = Events.ELEMENT_DESELECTED
 }
 
-export type Event = FileLoadedEvent | ElementSelectedEvent | ElementDeselectedEvent
+export class PaletteSelectedEvent {
+    constructor(palette: Palette) {
+        this.palette = palette
+    }
+
+    readonly event = Events.PALETTE_SELECTED
+    readonly palette: Palette
+}
+
+export type Event = FileLoadedEvent | ElementSelectedEvent | ElementDeselectedEvent | PaletteSelectedEvent

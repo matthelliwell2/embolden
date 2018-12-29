@@ -11,7 +11,7 @@ import { Events, EventService, FileLoadedEvent } from "../event.service"
 @Injectable({
     providedIn: "root"
 })
-export class Renderer extends Destroyable {
+export class StitchRenderer extends Destroyable {
     private stitchGroup: SVGGElement
     private scaling: number
     private svg: SVGSVGElement

@@ -1,22 +1,17 @@
-import { Component, OnInit } from "@angular/core"
-import { Palette, PaletteService } from "../palette/palette.service"
+import { Component } from "@angular/core"
+import { PaletteService } from "../palette/palette.service"
+import { DesignService } from "../design.service"
+import { EventService, PaletteSelectedEvent } from "../event.service"
 
 @Component({
     selector: "app-threads",
     templateUrl: "./threads.component.html",
     styleUrls: ["./threads.component.css"]
 })
-export class ThreadsComponent implements OnInit {
-    currentPalette: Palette | undefined
-
-    constructor(public paletteService: PaletteService) {}
-
-    ngOnInit() {
-        this.currentPalette = this.paletteService.getPalette(this.paletteService.paletteNames[0])
-    }
+export class ThreadsComponent {
+    constructor(public paletteService: PaletteService, public designService: DesignService, private eventService: EventService) {}
 
     onPaletteSelected = (name: string) => {
-        console.log("selected palette", name)
-        this.currentPalette = this.paletteService.getPalette(name)
+        this.eventService.sendEvent(new PaletteSelectedEvent(this.paletteService.getPalette(name)!))
     }
 }
