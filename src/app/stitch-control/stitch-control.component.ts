@@ -30,4 +30,24 @@ export class StitchControlComponent {
             return undefined
         }
     }
+
+    contrastingColour(colourValue: string): string {
+        const rgb = this.hexToRGB(colourValue)
+        const luminance = (0.299 * rgb.red + 0.587 * rgb.green + 0.114 * rgb.blue) / 255
+
+        if (luminance > 0.5) {
+            return "#000000"
+        } else {
+            return "#FFFFFF"
+        }
+    }
+
+    private hexToRGB(hex: string): { red: number; green: number; blue: number } {
+        const len = hex.length
+        return {
+            red: parseInt(hex.substr(len - 6, 2), 16),
+            blue: parseInt(hex.substr(len - 4, 2), 16),
+            green: parseInt(hex.substr(len - 2, 2), 16)
+        }
+    }
 }

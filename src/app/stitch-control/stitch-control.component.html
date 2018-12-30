@@ -3,9 +3,22 @@
 <div *ngIf="designService.selectedShape">
     <div ngbDropdown class="pt-3 pl-3" *ngIf="!designService.selectedPalette">Please select a palette</div>
     <div ngbDropdown class="block pt-3" *ngIf="designService.selectedPalette">
-        <label>Colour:</label> <button class="btn btn-outline-primary" id="fillColour" ngbDropdownToggle>{{ colour ? colour.name : "Please select" }}</button>
+        <label>Colour:</label>
+        <button
+            class="btn btn-outline-primary"
+            id="fillColour"
+            [ngStyle]="{ 'background-color': colour ? colour.value : 'white', color: colour ? contrastingColour(colour.value) : 'black' }"
+            ngbDropdownToggle
+        >
+            {{ colour ? colour.name : "Please select" }}
+        </button>
         <div ngbDropdownMenu aria-labelledby="fillColour" class="dropdown-menu">
-            <button *ngFor="let c of (designService.selectedPalette.colours | keyvalue)" class="dropdown-item" (click)="onFillColourSelected(c.value.number)">
+            <button
+                *ngFor="let c of (designService.selectedPalette.colours | keyvalue)"
+                [ngStyle]="{ 'background-color': c.value.value, color: contrastingColour(c.value.value) }"
+                class="dropdown-item"
+                (click)="onFillColourSelected(c.value.number)"
+            >
                 {{ c.value.name }}
             </button>
         </div>

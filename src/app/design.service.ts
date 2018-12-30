@@ -70,11 +70,11 @@ export class DesignService extends Destroyable {
         return this.shapes.get(id)!
     }
 
+    // Don't reset the palette so we can keep using the same palette for a new design
     private onFileLoaded = () => {
         // We've loaded a new file so clear down the cache of shapes from the previous file
         this.shapes.clear()
         this._selectedShape = undefined
-        this._selectedPalette = undefined
     }
 
     private onElementSelected(element: SVGPathElement) {
