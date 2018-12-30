@@ -1,6 +1,17 @@
-<div *ngIf="designService.selectedShape" class="pt-3 pl-3">
-    <div ngbDropdown class="d-inline-block">
-        <label class="mr-3">Satin Fill:</label> <button class="btn btn-outline-primary" id="fillType" ngbDropdownToggle>{{ designService.selectedShape!.fillType }}</button>
+<div class="pt-3"><div class="heading">Fill</div></div>
+
+<div *ngIf="designService.selectedShape">
+    <div ngbDropdown class="pt-3 pl-3" *ngIf="!designService.selectedPalette">Please select a palette</div>
+    <div ngbDropdown class="block pt-3" *ngIf="designService.selectedPalette">
+        <label>Colour:</label> <button class="btn btn-outline-primary" id="fillColour" ngbDropdownToggle>{{ colour ? colour.name : "Please select" }}</button>
+        <div ngbDropdownMenu aria-labelledby="fillColour" class="dropdown-menu">
+            <button *ngFor="let c of (designService.selectedPalette.colours | keyvalue)" class="dropdown-item" (click)="onFillColourSelected(c.value.number)">
+                {{ c.value.name }}
+            </button>
+        </div>
+    </div>
+    <div ngbDropdown class="block pt-3">
+        <label>Style:</label> <button class="btn btn-outline-primary" id="fillType" ngbDropdownToggle>{{ designService.selectedShape!.fillType }}</button>
         <div ngbDropdownMenu aria-labelledby="fillType" class="dropdown-menu">
             <button *ngFor="let type of fillTypes" class="dropdown-item" (click)="onFillTypeSelected(type)">{{ type }}</button>
         </div>

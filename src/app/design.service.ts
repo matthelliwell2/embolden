@@ -45,6 +45,8 @@ export class DesignService extends Destroyable {
                     case Events.PALETTE_SELECTED:
                         this.onPaletteSelected(event.palette)
                         break
+                    case Events.FILL_COLOUR_SELECTED:
+                        this.onFillColourSelected(event.colourNumber)
                 }
             })
     }
@@ -85,6 +87,12 @@ export class DesignService extends Destroyable {
 
     private onPaletteSelected(palette: Palette) {
         this._selectedPalette = palette
+    }
+
+    private onFillColourSelected(colourNumber: string): void {
+        if (this._selectedShape) {
+            this._selectedShape.fillColourNumber = colourNumber
+        }
     }
 
     /**

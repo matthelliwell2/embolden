@@ -26,7 +26,8 @@ export enum Events {
     FILE_LOADED,
     ELEMENT_SELECTED,
     ELEMENT_DESELECTED,
-    PALETTE_SELECTED
+    PALETTE_SELECTED,
+    FILL_COLOUR_SELECTED
 }
 
 export class FileLoadedEvent {
@@ -62,4 +63,13 @@ export class PaletteSelectedEvent {
     readonly palette: Palette
 }
 
-export type Event = FileLoadedEvent | ElementSelectedEvent | ElementDeselectedEvent | PaletteSelectedEvent
+export class FillColourSelectedEvent {
+    constructor(colourNumber: string) {
+        this.colourNumber = colourNumber
+    }
+
+    readonly event = Events.FILL_COLOUR_SELECTED
+    readonly colourNumber: string
+}
+
+export type Event = FileLoadedEvent | ElementSelectedEvent | ElementDeselectedEvent | PaletteSelectedEvent | FillColourSelectedEvent

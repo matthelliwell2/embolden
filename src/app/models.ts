@@ -1,6 +1,7 @@
 /**
  *  The properties for an element that we use to control how it is stitched
  */
+
 export class Shape {
     /**
      * @param element Element as displayed on the screen
@@ -10,6 +11,7 @@ export class Shape {
 
     stitches: Point[][] = []
     fillType: SatinFillType = SatinFillType.None
+    fillColourNumber: string | undefined = undefined
 }
 
 export class PathPart {

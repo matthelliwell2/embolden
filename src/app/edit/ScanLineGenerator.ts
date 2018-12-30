@@ -41,7 +41,7 @@ export class ScanLineGenerator extends Destroyable {
         const minStitchLength = minStitchLengthMM * this.scaling
 
         const intersections = this.generateFullWidthScanLinePaths(heightMM * this.scaling, elementBBox)
-            .map(path => this.stringToSVGElement(path, shape.element))
+            .map(path => this.stringToSVGElement(path))
             .map(scanLine => this.getIntersections(shape, scanLine))
             .filter(intersections => intersections.length > 1)
             .map(intersections => this.calculateDistancesAlongScanlinePath(intersections))
@@ -143,10 +143,10 @@ export class ScanLineGenerator extends Destroyable {
         })
     }
 
-    private stringToSVGElement(path: string, parent: SVGPathElement): SVGPathElement {
+    private stringToSVGElement(path: string): SVGPathElement {
         const element = this.renderer.createElement("path", "svg") as SVGPathElement
         element.setAttribute("d", path)
-        this.renderer.appendChild(parent.parentNode, element)
+        element.setAttribute("class", "scanline")
         return element
     }
 

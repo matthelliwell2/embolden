@@ -4,6 +4,7 @@ import { filter, map, takeUntil } from "rxjs/operators"
 import { Destroyable } from "../lib/Store"
 import { RenderSettings, RenderSettingsStore } from "../settings/render-settings/RenderSettingsStore"
 import { Events, EventService, FileLoadedEvent } from "../event.service"
+import { Colour } from "../palette/palette.service"
 
 /**
  * This is responsible for rendering an image of the stitches onto the screen
@@ -58,12 +59,22 @@ export class StitchRenderer extends Destroyable {
     /**
      * Draws the stitches for an element.
      */
-    render(shape: Shape): void {
+    render(shape: Shape, colour: Colour | undefined): void {
         if (shape.fillType !== SatinFillType.None) {
-            this.addStitchLinesToGroup(shape)
+            this.addStitchLinesToGroup(shape, colour)
         } else {
             this.deleteStitchesFromGroup(shape)
         }
+    }
+
+    updateFillColour(shape: Shape, colour: Colour): void {
+        const id = shape.element.getAttribute("id")
+        this.stitchGroup.childNodes.forEach(node => {
+            const element = node as SVGElement
+            if (element.id === id) {
+                element.setAttribute("stroke", colour.value)
+            }
+        })
     }
 
     private addMarkers(): void {
@@ -188,7 +199,7 @@ export class StitchRenderer extends Destroyable {
     /**
      * Adds the lines representing the path of the stitching to the group.
      */
-    private addStitchLinesToGroup(shape: Shape): void {
+    private addStitchLinesToGroup(shape: Shape, colour: Colour | undefined): void {
         shape.stitches.forEach(stitches => {
             console.log("Rendering", stitches.length, "stitches")
             const path = this.stitchesToPath(stitches)
@@ -197,6 +208,11 @@ export class StitchRenderer extends Destroyable {
             element.setAttribute("d", path)
             element.setAttribute("class", "stitchablePath")
             element.setAttribute("id", shape.element.getAttribute("id")!)
+
+            if (colour) {
+                element.setAttribute("stroke", colour.value)
+            }
+
             this.renderer.appendChild(this.stitchGroup, element)
         })
     }

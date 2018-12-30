@@ -4,7 +4,7 @@ import { Commands, CommandService } from "../command.service"
 import { Destroyable } from "../lib/Store"
 import { takeUntil } from "rxjs/operators"
 import { FileLoader } from "./FileLoader"
-import { ElementDeselectedEvent, ElementSelectedEvent, EventService, FileLoadedEvent } from "../event.service"
+import { ElementDeselectedEvent, ElementSelectedEvent, Events, EventService, FileLoadedEvent } from "../event.service"
 import { SatinFillType } from "../models"
 import { StitchGenerator } from "./StitchGenerator"
 import { DesignService } from "../design.service"
@@ -54,12 +54,40 @@ export class EditComponent extends Destroyable implements OnInit {
                         break
                 }
             })
+
+        this.eventService
+            .getStream()
+            .pipe(takeUntil(this.destroyed))
+            .subscribe(event => {
+                switch (event.event) {
+                    case Events.FILL_COLOUR_SELECTED:
+                        this.updateFillColour(event.colourNumber)
+                        break
+                }
+            })
     }
 
     private fillSelectedShape(fillType: SatinFillType) {
-        this.designService.selectedShape!.fillType = fillType
-        this.stitchGenerator.fill(this.designService.selectedShape!)
-        this.stitchRenderer.render(this.designService.selectedShape!)
+        if (this.designService.selectedShape) {
+            this.designService.selectedShape.fillType = fillType
+            this.stitchGenerator.fill(this.designService.selectedShape)
+
+            const colour =
+                this.designService.selectedPalette && this.designService.selectedShape.fillColourNumber
+                    ? this.designService.selectedPalette.colours[this.designService.selectedShape.fillColourNumber]
+                    : undefined
+            this.stitchRenderer.render(this.designService.selectedShape!, colour)
+        }
+    }
+
+    private updateFillColour(colourNumber: string): void {
+        if (this.designService.selectedShape && this.designService.selectedPalette) {
+            const colour = this.designService.selectedPalette.colours[colourNumber]
+
+            if (colour) {
+                this.stitchRenderer.updateFillColour(this.designService.selectedShape, colour)
+            }
+        }
     }
 
     private async loadFile(file: File) {
