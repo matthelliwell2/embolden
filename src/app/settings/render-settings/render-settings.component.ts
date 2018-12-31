@@ -37,7 +37,6 @@ export class RenderSettingsComponent implements AfterViewInit {
     ngAfterViewInit() {
         this.manualRefresh.emit()
     }
-    a
 
     onStrokeWidthChangeComplete(): void {
         this.store.state = this.renderSettings

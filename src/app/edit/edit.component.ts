@@ -100,8 +100,7 @@ export class EditComponent extends Destroyable implements OnInit {
         this.svg = result.svg
 
         // The scaling factor converts from element coords to viewbox (mm) coords. As we have flattened the file this is the only scale factor we need.
-        this.eventService.sendEvent(new FileLoadedEvent(result.svg, result.scaling))
-        // this.pubSubService.publish("FileLoaded", { svg: result.svg, scaling: result.scaling })
+        this.eventService.sendEvent(new FileLoadedEvent(result.svg, result.scaling, file.name))
 
         // Set the height to 100% so the canvas will fill the available height
         this.svg.setAttribute("height", "100%")

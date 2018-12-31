@@ -1,6 +1,7 @@
 import { Injectable } from "@angular/core"
 import { Observable, Subject } from "rxjs"
 import { SatinFillType } from "./models"
+import { ExportTypes } from "./export.service"
 
 /**
  * Exposes a subject for passing commands between components
@@ -11,7 +12,9 @@ import { SatinFillType } from "./models"
 export class CommandService {
     private subject = new Subject<Command>()
 
-    constructor() {}
+    constructor() {
+        console.log("CommandService started")
+    }
 
     getStream(): Observable<Command> {
         return this.subject.asObservable()
@@ -24,25 +27,26 @@ export class CommandService {
 
 export enum Commands {
     LOAD_FILE,
-    FILL_SELECTED_SHAPE
+    FILL_SELECTED_SHAPE,
+    EXPORT_FILE_COMMAND
 }
 
 export class LoadFileCommand {
-    constructor(file: File) {
-        this.file = file
-    }
+    constructor(public readonly file: File) {}
 
     readonly command = Commands.LOAD_FILE
-    readonly file: File
 }
 
 export class FillSelectedShapeCommand {
-    constructor(fillType: SatinFillType) {
-        this.fillType = fillType
-    }
+    constructor(public readonly fillType: SatinFillType) {}
 
     readonly command = Commands.FILL_SELECTED_SHAPE
-    readonly fillType: SatinFillType
 }
 
-export type Command = LoadFileCommand | FillSelectedShapeCommand
+export class ExportFileCommand {
+    constructor(public readonly exportType: ExportTypes) {}
+
+    readonly command = Commands.EXPORT_FILE_COMMAND
+}
+
+export type Command = LoadFileCommand | FillSelectedShapeCommand | ExportFileCommand

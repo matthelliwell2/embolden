@@ -17,6 +17,7 @@ export class DesignService extends Destroyable {
     private readonly renderer: Renderer2
     private _selectedShape: Shape | undefined = undefined
     private _selectedPalette: Palette | undefined = undefined
+    private _name: string | undefined = undefined
 
     /**
      * A map of element id to the stitching properties of that element. This acts as the central control structure for
@@ -26,6 +27,7 @@ export class DesignService extends Destroyable {
 
     constructor(rendererFactory: RendererFactory2, private eventService: EventService) {
         super()
+        console.log("DesignService started")
         this.renderer = rendererFactory.createRenderer(null, null)
 
         this.eventService
@@ -34,7 +36,7 @@ export class DesignService extends Destroyable {
             .subscribe(event => {
                 switch (event.event) {
                     case Events.FILE_LOADED:
-                        this.onFileLoaded()
+                        this.onFileLoaded(event.name)
                         break
                     case Events.ELEMENT_SELECTED:
                         this.onElementSelected(event.element)
@@ -59,6 +61,10 @@ export class DesignService extends Destroyable {
         return this._selectedPalette
     }
 
+    get name(): string | undefined {
+        return this._name
+    }
+
     private getShape(element: SVGPathElement): Shape {
         const id = element.getAttribute("id") as string
         if (!this.shapes.has(id)) {
@@ -71,10 +77,11 @@ export class DesignService extends Destroyable {
     }
 
     // Don't reset the palette so we can keep using the same palette for a new design
-    private onFileLoaded = () => {
+    private onFileLoaded = (name: string) => {
         // We've loaded a new file so clear down the cache of shapes from the previous file
         this.shapes.clear()
         this._selectedShape = undefined
+        this._name = name
     }
 
     private onElementSelected(element: SVGPathElement) {

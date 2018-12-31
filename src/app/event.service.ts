@@ -11,7 +11,9 @@ import { Palette } from "./palette/palette.service"
 export class EventService {
     private subject = new Subject<Event>()
 
-    constructor() {}
+    constructor() {
+        console.log("EventService started")
+    }
 
     getStream(): Observable<Event> {
         return this.subject.asObservable()
@@ -31,23 +33,15 @@ export enum Events {
 }
 
 export class FileLoadedEvent {
-    constructor(root: SVGSVGElement, scaling: number) {
-        this.root = root
-        this.scaling = scaling
-    }
+    constructor(public readonly root: SVGSVGElement, public readonly scaling: number, public readonly name: string) {}
 
     readonly event = Events.FILE_LOADED
-    readonly root: SVGSVGElement
-    readonly scaling: number
 }
 
 export class ElementSelectedEvent {
-    constructor(element: SVGPathElement) {
-        this.element = element
-    }
+    constructor(public readonly element: SVGPathElement) {}
 
     readonly event = Events.ELEMENT_SELECTED
-    readonly element: SVGPathElement
 }
 
 export class ElementDeselectedEvent {
@@ -55,21 +49,15 @@ export class ElementDeselectedEvent {
 }
 
 export class PaletteSelectedEvent {
-    constructor(palette: Palette) {
-        this.palette = palette
-    }
+    constructor(public readonly palette: Palette) {}
 
     readonly event = Events.PALETTE_SELECTED
-    readonly palette: Palette
 }
 
 export class FillColourSelectedEvent {
-    constructor(colourNumber: string) {
-        this.colourNumber = colourNumber
-    }
+    constructor(public readonly colourNumber: string) {}
 
     readonly event = Events.FILL_COLOUR_SELECTED
-    readonly colourNumber: string
 }
 
 export type Event = FileLoadedEvent | ElementSelectedEvent | ElementDeselectedEvent | PaletteSelectedEvent | FillColourSelectedEvent

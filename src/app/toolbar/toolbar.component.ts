@@ -1,14 +1,20 @@
-import { Component, HostListener, OnInit, ViewChild } from "@angular/core"
+import { Component, HostListener, ViewChild } from "@angular/core"
 import { NgbModal } from "@ng-bootstrap/ng-bootstrap"
 import { SettingsComponent } from "../settings/settings.component"
-import { CommandService, LoadFileCommand } from "../command.service"
+import { CommandService, ExportFileCommand, LoadFileCommand } from "../command.service"
+import { ExportTypes } from "../export.service"
+import { Destroyable } from "../lib/Store"
+import { Events, EventService } from "../event.service"
+import { takeUntil } from "rxjs/operators"
 
 @Component({
     selector: "app-toolbar",
     templateUrl: "./toolbar.component.html",
     styleUrls: ["./toolbar.component.css"]
 })
-export class ToolbarComponent implements OnInit {
+export class ToolbarComponent extends Destroyable {
+    fileLoaded = false
+
     topPos = 10
     leftPos = 25
 
@@ -20,21 +26,39 @@ export class ToolbarComponent implements OnInit {
     // This is a reference to the hidden input type='file' component
     @ViewChild("file") file
 
-    constructor(private commandService: CommandService, private modalService: NgbModal) {}
+    constructor(private commandService: CommandService, private eventService: EventService, private modalService: NgbModal) {
+        super()
 
-    ngOnInit() {}
+        this.eventService
+            .getStream()
+            .pipe(takeUntil(this.destroyed))
+            .subscribe(event => {
+                switch (event.event) {
+                    case Events.FILE_LOADED:
+                        this.fileLoaded = true
+                        break
+                }
+            })
+    }
+
+    get keys() {
+        return Object.keys(ExportTypes)
+    }
+    value(key) {
+        return ExportTypes[key]
+    }
 
     /**
      * When we click on our open icon, pass that onto the file input component so the user gets a list of files to select.
      */
-    onOpen() {
+    onOpen(): void {
         this.file.nativeElement.click()
     }
 
     /**
      * Called by the file selection dialog when we've got a file to load
      */
-    onFilesAdded() {
+    onFilesAdded(): void {
         this.commandService.sendCommand(new LoadFileCommand(this.file.nativeElement.files[0]))
     }
 
@@ -44,6 +68,10 @@ export class ToolbarComponent implements OnInit {
     onSettings() {
         const modalRef = this.modalService.open(SettingsComponent)
         modalRef.componentInstance.name = "World"
+    }
+
+    onExport(key: string): void {
+        this.commandService.sendCommand(new ExportFileCommand(ExportTypes[key]))
     }
 
     /**

@@ -11,6 +11,7 @@ import { PersistingStore } from "../../lib/Store"
 export class RenderSettingsStore extends PersistingStore<RenderSettings> {
     constructor() {
         super("renderSettings", new RenderSettings())
+        console.log("RenderSettingsStore started")
     }
 }
 
