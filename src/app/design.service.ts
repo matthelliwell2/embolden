@@ -22,6 +22,7 @@ export class DesignService extends Destroyable {
     /**
      * A map of element id to the stitching properties of that element. This acts as the central control structure for
      * the stitching
+     * TODO this will need some way of supporting ordering
      */
     readonly shapes: Map<string, Shape> = new Map()
 
@@ -61,8 +62,24 @@ export class DesignService extends Destroyable {
         return this._selectedPalette
     }
 
+    /**
+     * Name of the file that was loaded to create this design
+     */
     get name(): string | undefined {
         return this._name
+    }
+
+    /**
+     * Returns all the shapes that we can attempt to sew
+     */
+    get sewableShapes(): Shape[] {
+        return Array.from(this.shapes.values())
+            .filter(shape => shape.fillColourNumber)
+            .filter(shape => this.getNumStitches(shape) > 0)
+    }
+
+    private getNumStitches(shape: Shape): number {
+        return shape.stitches.reduce((total, stitches) => total + stitches.length, 0)
     }
 
     private getShape(element: SVGPathElement): Shape {
