@@ -13,7 +13,7 @@
     border-radius: 1rem !important;
 }
 
-.stitchableElement {
+.stitchableShape {
     stroke: #000;
     stroke-width: 1;
     vector-effect: non-scaling-stroke;

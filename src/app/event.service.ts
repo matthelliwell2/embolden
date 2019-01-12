@@ -25,17 +25,10 @@ export class EventService {
 }
 
 export enum Events {
-    FILE_LOADED,
     ELEMENT_SELECTED,
     ELEMENT_DESELECTED,
     PALETTE_SELECTED,
     FILL_COLOUR_SELECTED
-}
-
-export class FileLoadedEvent {
-    constructor(public readonly root: SVGSVGElement, public readonly scaling: number, public readonly name: string) {}
-
-    readonly event = Events.FILE_LOADED
 }
 
 export class ElementSelectedEvent {
@@ -60,4 +53,4 @@ export class FillColourSelectedEvent {
     readonly event = Events.FILL_COLOUR_SELECTED
 }
 
-export type Event = FileLoadedEvent | ElementSelectedEvent | ElementDeselectedEvent | PaletteSelectedEvent | FillColourSelectedEvent
+export type Event = ElementSelectedEvent | ElementDeselectedEvent | PaletteSelectedEvent | FillColourSelectedEvent

@@ -16,12 +16,29 @@ import { Ng5SliderModule } from "ng5-slider"
 import { ColorChromeModule } from "ngx-color/chrome"
 import { NgxToggleModule } from "ngx-toggle"
 import { ThreadsComponent } from "./threads/threads.component"
+import { StoreModule } from "@ngrx/store"
+import { EffectsModule } from "@ngrx/effects"
+import { metaReducers, reducers } from "./store"
+import { StoreDevtoolsModule } from "@ngrx/store-devtools"
+import { FileEffects } from "./store/file/file.effects"
+import { environment } from "../environments/environment"
 
 library.add(faFolderOpen, faBold, faWindowRestore, faSlidersH, faFileExport)
 
 @NgModule({
     declarations: [AppComponent, EditComponent, ToolbarComponent, PropertiesBarComponent, StitchControlComponent, SettingsComponent, RenderSettingsComponent, ThreadsComponent],
-    imports: [BrowserModule, NgbModule, FontAwesomeModule, FormsModule, Ng5SliderModule, ColorChromeModule, NgxToggleModule],
+    imports: [
+        BrowserModule,
+        NgbModule,
+        FontAwesomeModule,
+        FormsModule,
+        Ng5SliderModule,
+        ColorChromeModule,
+        NgxToggleModule,
+        StoreModule.forRoot(reducers, { metaReducers }),
+        EffectsModule.forRoot([FileEffects]),
+        !environment.production ? StoreDevtoolsModule.instrument() : []
+    ],
     providers: [],
     bootstrap: [AppComponent],
     entryComponents: [SettingsComponent]

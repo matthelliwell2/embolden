@@ -2,9 +2,12 @@ import { Injectable, Renderer2, RendererFactory2 } from "@angular/core"
 import { PathPart, Shape } from "./models"
 import * as svgpath from "svgpath"
 import { Events, EventService } from "./event.service"
-import { takeUntil } from "rxjs/operators"
+import { distinctUntilKeyChanged, filter, takeUntil } from "rxjs/operators"
 import { Destroyable } from "./lib/Store"
 import { Palette } from "./palette/palette.service"
+import { select, Store } from "@ngrx/store"
+import { DesignState } from "./store/file/file.reducer"
+import { State } from "./store"
 import Point = SvgPanZoom.Point
 
 /**
@@ -26,9 +29,21 @@ export class DesignService extends Destroyable {
      */
     readonly shapes: Map<string, Shape> = new Map()
 
-    constructor(rendererFactory: RendererFactory2, private eventService: EventService) {
+    constructor(rendererFactory: RendererFactory2, private eventService: EventService, private store: Store<State>) {
         super()
         console.log("DesignService started")
+
+        this.store
+            .pipe(
+                select(state => state.design),
+                filter(design => design !== undefined),
+                distinctUntilKeyChanged("name"),
+                takeUntil(this.destroyed)
+            )
+            .subscribe((state: DesignState) => {
+                this.onFileLoaded(state.name)
+            })
+
         this.renderer = rendererFactory.createRenderer(null, null)
 
         this.eventService
@@ -36,9 +51,6 @@ export class DesignService extends Destroyable {
             .pipe(takeUntil(this.destroyed))
             .subscribe(event => {
                 switch (event.event) {
-                    case Events.FILE_LOADED:
-                        this.onFileLoaded(event.name)
-                        break
                     case Events.ELEMENT_SELECTED:
                         this.onElementSelected(event.element)
                         break

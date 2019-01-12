@@ -1,10 +1,12 @@
 import { Injectable, Renderer2, RendererFactory2 } from "@angular/core"
 import { Point, SatinFillType, Shape } from "../models"
-import { filter, map, takeUntil } from "rxjs/operators"
+import { filter, takeUntil } from "rxjs/operators"
 import { Destroyable } from "../lib/Store"
 import { RenderSettings, RenderSettingsStore } from "../settings/render-settings/RenderSettingsStore"
-import { Events, EventService, FileLoadedEvent } from "../event.service"
 import { Colour } from "../palette/palette.service"
+import { select, Store } from "@ngrx/store"
+import { State } from "../store"
+import { DesignState } from "../store/file/file.reducer"
 
 /**
  * This is responsible for rendering an image of the stitches onto the screen
@@ -15,7 +17,7 @@ import { Colour } from "../palette/palette.service"
 export class StitchRenderer extends Destroyable {
     private stitchGroup: SVGGElement
     private scaling: number
-    private svg: SVGSVGElement
+    private root: SVGSVGElement
     private renderSettings = new RenderSettings()
     private renderer: Renderer2
 
@@ -23,29 +25,27 @@ export class StitchRenderer extends Destroyable {
     private markerCircle: SVGMarkerElement
     private markerSolidCircle: SVGMarkerElement
 
-    constructor(private eventService: EventService, rendererFactory: RendererFactory2, private renderSettingsStore: RenderSettingsStore) {
+    constructor(rendererFactory: RendererFactory2, private renderSettingsStore: RenderSettingsStore, private store: Store<State>) {
         super()
         this.renderer = rendererFactory.createRenderer(null, null)
         this.renderSettings = renderSettingsStore.state
 
-        this.eventService
-            .getStream()
+        this.store
             .pipe(
-                takeUntil(this.destroyed),
-                filter(event => event.event === Events.FILE_LOADED),
-                map(event => event as FileLoadedEvent)
+                select(state => state.design),
+                filter(design => design !== undefined),
+                takeUntil(this.destroyed)
             )
-            .subscribe(event => this.onFileLoaded(event.root, event.scaling))
+            .subscribe((design: DesignState) => {
+                this.onFileLoaded(design.root, design.scaling)
+            })
 
         this.renderSettingsStore.stream.pipe(takeUntil(this.destroyed)).subscribe(this.onRenderSettingsChanged)
     }
 
-    onFileLoaded = (svg: SVGSVGElement, scaling: number) => {
+    onFileLoaded = (root: SVGSVGElement, scaling: number) => {
         this.scaling = scaling
-        this.svg = svg
-
-        this.deleteCssDefs(svg)
-        this.deleteMarkerDefs(svg)
+        this.root = root
 
         this.addMarkers()
         this.createStitchGroup()
@@ -78,11 +78,11 @@ export class StitchRenderer extends Destroyable {
     }
 
     private addMarkers(): void {
-        let defs = this.svg.querySelector("defs")
+        let defs = this.root.querySelector("defs")
         if (!defs) {
             const defsElement = this.renderer.createElement("defs", "svg")
-            this.svg.appendChild(defsElement)
-            defs = this.svg.querySelector("defs")!
+            this.root.appendChild(defsElement)
+            defs = this.root.querySelector("defs")!
         }
 
         this.markerCircle = this.createMarker("markerCircle", this.createCircle())
@@ -157,30 +157,10 @@ export class StitchRenderer extends Destroyable {
         }
 
         element.setAttribute("stroke-width", `${this.renderSettings.strokeWidth}px`)
-        const transform = this.svg.createSVGTransform()
+        const transform = this.root.createSVGTransform()
         transform.setScale(scaling, scaling)
         element.transform.baseVal.clear()
         element.transform.baseVal.appendItem(transform)
-    }
-
-    private deleteCssDefs(svg: SVGSVGElement): void {
-        const defs = svg.querySelector("defs")
-        if (defs) {
-            const style = defs.querySelector('style[type="text/css"]')
-            if (style) {
-                defs.removeChild(style)
-            }
-        }
-    }
-
-    private deleteMarkerDefs(svg: SVGSVGElement): void {
-        const defs = svg.querySelector("defs")
-        if (defs) {
-            const markers = defs.querySelectorAll("marker")
-            if (markers) {
-                markers.forEach(marker => defs.removeChild(marker))
-            }
-        }
     }
 
     private deleteStitchesFromGroup(shape: Shape): void {
@@ -227,7 +207,7 @@ export class StitchRenderer extends Destroyable {
 
         this.stitchGroup = this.renderer.createElement("g", "svg") as SVGGElement
         this.setRenderAttributes()
-        this.renderer.appendChild(this.svg, this.stitchGroup)
+        this.renderer.appendChild(this.root, this.stitchGroup)
     }
 
     private setRenderAttributes = (): void => {

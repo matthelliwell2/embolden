@@ -1,10 +1,11 @@
 import { Injectable } from "@angular/core"
 import { Destroyable } from "./lib/Store"
-import { filter, map, takeUntil } from "rxjs/operators"
+import { filter, takeUntil } from "rxjs/operators"
 import { Commands, CommandService } from "./command.service"
 import { DesignService } from "./design.service"
 import { Shape } from "./models"
-import { Events, EventService, FileLoadedEvent } from "./event.service"
+import { select, Store } from "@ngrx/store"
+import { State } from "./store"
 
 const Buffer = require("buffer/").Buffer
 const dateFormat = require("dateformat")
@@ -15,7 +16,7 @@ const dateFormat = require("dateformat")
 export class ExportService extends Destroyable {
     private scaling: number = 1
 
-    constructor(private commandService: CommandService, private eventService: EventService, private designService: DesignService) {
+    constructor(private commandService: CommandService, private designService: DesignService, private store: Store<State>) {
         super()
         console.log("ExportService started")
 
@@ -30,14 +31,15 @@ export class ExportService extends Destroyable {
                 }
             })
 
-        this.eventService
-            .getStream()
+        this.store
             .pipe(
-                takeUntil(this.destroyed),
-                filter(event => event.event === Events.FILE_LOADED),
-                map(event => event as FileLoadedEvent)
+                filter(state => state.design !== undefined),
+                select(state => state.design.scaling),
+                takeUntil(this.destroyed)
             )
-            .subscribe(event => (this.scaling = event.scaling))
+            .subscribe((scaling: number) => {
+                this.scaling = scaling
+            })
     }
 
     private exportFile(type: ExportTypes): void {

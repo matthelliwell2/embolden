@@ -2,9 +2,10 @@ import { Injectable, Renderer2, RendererFactory2 } from "@angular/core"
 import * as svgIntersections from "svg-intersections"
 import { Intersection, Intersections, Point, Shape } from "../models"
 import * as Lib from "../lib/lib"
-import { Events, EventService, FileLoadedEvent } from "../event.service"
 import { Destroyable } from "../lib/Store"
-import { filter, map, takeUntil } from "rxjs/operators"
+import { select, Store } from "@ngrx/store"
+import { filter, takeUntil } from "rxjs/operators"
+import { State } from "../store"
 
 /**
  * This class is responsible for generate scan lines across an arbitrary shape.
@@ -16,20 +17,21 @@ export class ScanLineGenerator extends Destroyable {
     private readonly renderer: Renderer2
     private scaling: number
     private readonly intersect = svgIntersections.intersect
-    private readonly shape = svgIntersections.shape
+    private readonly shape = svgIntersections.selectedShape
 
-    constructor(rendererFactory: RendererFactory2, private eventService: EventService) {
+    constructor(rendererFactory: RendererFactory2, private store: Store<State>) {
         super()
         this.renderer = rendererFactory.createRenderer(null, null)
 
-        this.eventService
-            .getStream()
+        this.store
             .pipe(
-                takeUntil(this.destroyed),
-                filter(event => event.event === Events.FILE_LOADED),
-                map(event => event as FileLoadedEvent)
+                filter(state => state.design !== undefined),
+                select(state => state.design.scaling),
+                takeUntil(this.destroyed)
             )
-            .subscribe(event => (this.scaling = event.scaling))
+            .subscribe((scaling: number) => {
+                this.scaling = scaling
+            })
     }
 
     /**

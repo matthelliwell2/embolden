@@ -1,11 +1,13 @@
+import { select, Store } from "@ngrx/store"
 import { Component, HostListener, ViewChild } from "@angular/core"
 import { NgbModal } from "@ng-bootstrap/ng-bootstrap"
 import { SettingsComponent } from "../settings/settings.component"
-import { CommandService, ExportFileCommand, LoadFileCommand } from "../command.service"
+import { CommandService, ExportFileCommand } from "../command.service"
 import { ExportTypes } from "../export.service"
 import { Destroyable } from "../lib/Store"
-import { Events, EventService } from "../event.service"
-import { takeUntil } from "rxjs/operators"
+import { filter, takeUntil } from "rxjs/operators"
+import { LoadFileAction } from "../store/file/file.actions"
+import { State } from "../store"
 
 @Component({
     selector: "app-toolbar",
@@ -26,19 +28,16 @@ export class ToolbarComponent extends Destroyable {
     // This is a reference to the hidden input type='file' component
     @ViewChild("file") file
 
-    constructor(private commandService: CommandService, private eventService: EventService, private modalService: NgbModal) {
+    constructor(private store: Store<State>, private commandService: CommandService, private modalService: NgbModal) {
         super()
 
-        this.eventService
-            .getStream()
-            .pipe(takeUntil(this.destroyed))
-            .subscribe(event => {
-                switch (event.event) {
-                    case Events.FILE_LOADED:
-                        this.fileLoaded = true
-                        break
-                }
-            })
+        this.store
+            .pipe(
+                select(state => state.design),
+                filter(design => design !== undefined),
+                takeUntil(this.destroyed)
+            )
+            .subscribe(() => (this.fileLoaded = true))
     }
 
     get keys() {
@@ -59,7 +58,8 @@ export class ToolbarComponent extends Destroyable {
      * Called by the file selection dialog when we've got a file to load
      */
     onFilesAdded(): void {
-        this.commandService.sendCommand(new LoadFileCommand(this.file.nativeElement.files[0]))
+        const file = this.file.nativeElement.files[0] as File
+        this.store.dispatch(new LoadFileAction({ file: file }))
     }
 
     /**

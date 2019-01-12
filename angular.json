@@ -123,5 +123,8 @@
       }
     }
   },
-  "defaultProject": "embolden"
+  "defaultProject": "embolden",
+  "cli": {
+    "defaultCollection": "@ngrx/schematics"
+  }
 }

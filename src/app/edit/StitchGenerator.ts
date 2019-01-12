@@ -2,10 +2,11 @@ import { Injectable } from "@angular/core"
 import { Intersection, Intersections, Point, SatinFillType, Shape } from "../models"
 import * as Lib from "../lib/lib"
 import { OptimiserService } from "../optimiser.service"
-import { Events, EventService, FileLoadedEvent } from "../event.service"
 import { Destroyable } from "../lib/Store"
-import { filter, map, takeUntil } from "rxjs/operators"
 import { ScanLineGenerator } from "./ScanLineGenerator"
+import { select, Store } from "@ngrx/store"
+import { State } from "../store"
+import { filter, takeUntil } from "rxjs/operators"
 
 const Bezier = require("bezier-js")
 
@@ -24,16 +25,18 @@ export class StitchGenerator extends Destroyable {
 
     private scaling: number
 
-    constructor(private scanLineGenerator: ScanLineGenerator, private optimiserService: OptimiserService, private eventService: EventService) {
+    constructor(private scanLineGenerator: ScanLineGenerator, private optimiserService: OptimiserService, private store: Store<State>) {
         super()
-        this.eventService
-            .getStream()
+
+        this.store
             .pipe(
-                takeUntil(this.destroyed),
-                filter(event => event.event === Events.FILE_LOADED),
-                map(event => event as FileLoadedEvent)
+                filter(state => state.design !== undefined),
+                select(state => state.design.scaling),
+                takeUntil(this.destroyed)
             )
-            .subscribe(event => (this.scaling = event.scaling))
+            .subscribe((scaling: number) => {
+                this.scaling = scaling
+            })
     }
 
     fill(shape: Shape): void {
