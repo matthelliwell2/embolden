@@ -13,6 +13,10 @@ export class Shape {
     fillType: SatinFillType = SatinFillType.None
     fillColourNumber: string | undefined = undefined
 
+    get id(): string {
+        return this.element.getAttribute("id")!
+    }
+
     get stitchCount(): number {
         return this.stitches.reduce((total, s) => {
             total += s.length

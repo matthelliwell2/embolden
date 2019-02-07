@@ -22,6 +22,7 @@ import { metaReducers, reducers } from "./store"
 import { StoreDevtoolsModule } from "@ngrx/store-devtools"
 import { FileEffects } from "./store/file/file.effects"
 import { environment } from "../environments/environment"
+import { SelectedShapeEffects } from "./store/select/selected.shape.effects"
 
 library.add(faFolderOpen, faBold, faWindowRestore, faSlidersH, faFileExport)
 
@@ -36,7 +37,7 @@ library.add(faFolderOpen, faBold, faWindowRestore, faSlidersH, faFileExport)
         ColorChromeModule,
         NgxToggleModule,
         StoreModule.forRoot(reducers, { metaReducers }),
-        EffectsModule.forRoot([FileEffects]),
+        EffectsModule.forRoot([FileEffects, SelectedShapeEffects]),
         !environment.production ? StoreDevtoolsModule.instrument() : []
     ],
     providers: [],

@@ -5,7 +5,7 @@ import * as Lib from "../lib/lib"
 import { Destroyable } from "../lib/Store"
 import { select, Store } from "@ngrx/store"
 import { filter, takeUntil } from "rxjs/operators"
-import { State } from "../store"
+import { AppState } from "../store"
 
 /**
  * This class is responsible for generate scan lines across an arbitrary shape.
@@ -19,14 +19,14 @@ export class ScanLineGenerator extends Destroyable {
     private readonly intersect = svgIntersections.intersect
     private readonly shape = svgIntersections.selectedShape
 
-    constructor(rendererFactory: RendererFactory2, private store: Store<State>) {
+    constructor(rendererFactory: RendererFactory2, private store$: Store<AppState>) {
         super()
         this.renderer = rendererFactory.createRenderer(null, null)
 
-        this.store
+        this.store$
             .pipe(
-                filter(state => state.design !== undefined),
-                select(state => state.design.scaling),
+                filter(state => state.render !== undefined),
+                select(state => state.render.scaling),
                 takeUntil(this.destroyed)
             )
             .subscribe((scaling: number) => {

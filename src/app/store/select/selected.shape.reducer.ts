@@ -11,12 +11,14 @@ export class InitialSelectedState implements SelectedShapeState {
     previousShape: Shape | undefined = undefined
 }
 
-export const reducer = (state = new InitialSelectedState(), action: SelectedShapeActions): SelectedShapeState => {
+export const selectReducer = (state = new InitialSelectedState(), action: SelectedShapeActions): SelectedShapeState => {
     switch (action.type) {
         case SelectActionTypes.SHAPE_SELECTED:
+            console.log("selectReducer SHAPE_SELECTED")
             return { previousShape: state.selectedShape, selectedShape: action.payload.selectedShape }
 
         case SelectActionTypes.SHAPE_DESELECTED:
+            console.log("selectReducer SHAPE_DESELECTED")
             return { previousShape: state.selectedShape, selectedShape: undefined }
 
         default:

@@ -25,20 +25,8 @@ export class EventService {
 }
 
 export enum Events {
-    ELEMENT_SELECTED,
-    ELEMENT_DESELECTED,
     PALETTE_SELECTED,
     FILL_COLOUR_SELECTED
-}
-
-export class ElementSelectedEvent {
-    constructor(public readonly element: SVGPathElement) {}
-
-    readonly event = Events.ELEMENT_SELECTED
-}
-
-export class ElementDeselectedEvent {
-    readonly event = Events.ELEMENT_DESELECTED
 }
 
 export class PaletteSelectedEvent {
@@ -53,4 +41,4 @@ export class FillColourSelectedEvent {
     readonly event = Events.FILL_COLOUR_SELECTED
 }
 
-export type Event = ElementSelectedEvent | ElementDeselectedEvent | PaletteSelectedEvent | FillColourSelectedEvent
+export type Event = PaletteSelectedEvent | FillColourSelectedEvent

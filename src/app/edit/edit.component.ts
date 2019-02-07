@@ -3,7 +3,7 @@ import { Component, ElementRef, NgZone, OnInit, Renderer2, ViewChild } from "@an
 import { Commands, CommandService } from "../command.service"
 import { Destroyable } from "../lib/Store"
 import { filter, map, takeUntil } from "rxjs/operators"
-import { ElementDeselectedEvent, ElementSelectedEvent, Events, EventService } from "../event.service"
+import { Events, EventService } from "../event.service"
 import { SatinFillType, Shape } from "../models"
 import { StitchGenerator } from "./StitchGenerator"
 import { DesignService } from "../design.service"
@@ -12,8 +12,8 @@ import { ActionsSubject, select, Store } from "@ngrx/store"
 import { DesignState } from "../store/file/file.reducer"
 import { ofType } from "@ngrx/effects"
 import { FileActionTypes, SVGFileLoadedAction, SVGFileRenderedAction } from "../store/file/file.actions"
-import { State } from "../store"
-import { ShapeSelectedAction } from "../store/select/selected.shape.actions"
+import { AppState } from "../store"
+import { ShapeDeselectedAction, ShapeSelectedAction } from "../store/select/selected.shape.actions"
 
 /**
  * This component is the central component that renders the svg and lets the user edit stitches.
@@ -28,9 +28,6 @@ export class EditComponent extends Destroyable implements OnInit {
 
     private group: SVGGElement
 
-    private selectionRect1: SVGGraphicsElement | undefined
-    private selectionRect2: SVGGraphicsElement | undefined
-    private selectedElement: SVGGraphicsElement | undefined
     @ViewChild("container") container: ElementRef
 
     constructor(
@@ -41,14 +38,14 @@ export class EditComponent extends Destroyable implements OnInit {
         private stitchGenerator: StitchGenerator,
         private stitchRenderer: StitchRenderer,
         private designService: DesignService,
-        private store: Store<State>,
-        private actions: ActionsSubject
+        private store$: Store<AppState>,
+        private actions$: ActionsSubject
     ) {
         super()
 
         // Subscribe to the svg file loaded action in here rather than in a reducer/effect as we need to render the file in this component. If we didn't do this we'd
         // have to store the file contents in state and listen for the state change which would be a waste of memory and make the code more complex
-        this.actions
+        this.actions$
             .pipe(
                 takeUntil(this.destroyed),
                 ofType(FileActionTypes.SVG_FILE_LOADED),
@@ -57,7 +54,7 @@ export class EditComponent extends Destroyable implements OnInit {
             )
             .subscribe(file => this.onSVGFileLoaded(file.name, file.contents))
 
-        this.store
+        this.store$
             .pipe(
                 select(state => state.design),
                 filter(design => design !== undefined),
@@ -96,12 +93,7 @@ export class EditComponent extends Destroyable implements OnInit {
      * At SVG file has been loaded into memory and can be rendered. The rendering is tightly tied to the component so we do it in here rather than in an effect.
      */
     private onSVGFileLoaded(name: string, contents: string) {
-        console.log("Rendering", name)
-
-        // TODO move this to state
-        this.selectedElement = undefined
-        this.selectionRect1 = undefined
-        this.selectionRect2 = undefined
+        console.log("onSVGFileLoaded ", name)
 
         this.container.nativeElement.innerHTML = contents
 
@@ -120,7 +112,7 @@ export class EditComponent extends Destroyable implements OnInit {
 
         // Note we dispatch the rendered event before the pan/zoom control is added. This is so that the processing of the event doesn't get mixed trying to manipulate the
         // SVG elements added by the pan/zoom control.
-        this.store.dispatch(new SVGFileRenderedAction({ name: name, root: root, renderer: this.renderer2 }))
+        this.store$.dispatch(new SVGFileRenderedAction({ name: name, root: root, renderer: this.renderer2 }))
 
         // Set the height to 100% so the canvas will fill the available height
         root.setAttribute("height", "100%")
@@ -133,7 +125,7 @@ export class EditComponent extends Destroyable implements OnInit {
     }
 
     /**
-     * Add a class to all the stichable elements so that they are easy to identify and can be controlled by CSS. This is done as soon as possible so no other elements have been
+     * Add a class to all the stitchable elements so that they are easy to identify and can be controlled by CSS. This is done as soon as possible so no other elements have been
      * drawn yet and processing can rely on this class being present
      */
     private addClassToAllElements(node: Node, className: string) {
@@ -182,55 +174,11 @@ export class EditComponent extends Destroyable implements OnInit {
     private selectOrDeselectShape(element: SVGPathElement) {
         const selectedShape = this.design.shapes.get(element.getAttribute("id")!) as Shape
         if (selectedShape || element.nodeName === "svg") {
-            this.unselect()
+            this.store$.dispatch(new ShapeDeselectedAction({ group: this.group, renderer: this.renderer2 }))
         }
 
         if (selectedShape) {
-            this.store.dispatch(new ShapeSelectedAction({ selectedShape: selectedShape, group: this.group }))
-
-            this.selectedElement = element
-
-            // Add a class to the element so we can highlight it
-            element.classList.add("selected-element")
-
-            this.selectionRect1 = this.renderer2.createElement("rect", "svg")
-            const bbox = element.getBBox()
-            this.selectionRect1!.setAttribute("x", `${bbox.x}`)
-            this.selectionRect1!.setAttribute("y", `${bbox.y}`)
-            this.selectionRect1!.setAttribute("height", `${bbox.height}`)
-            this.selectionRect1!.setAttribute("width", `${bbox.width}`)
-            this.renderer2.setAttribute(this.selectionRect1, "vector-effect", "non-scaling-stroke")
-            this.renderer2.addClass(this.selectionRect1, "selection-rect1")
-            this.renderer2.appendChild(this.group, this.selectionRect1)
-
-            this.selectionRect2 = this.renderer2.createElement("rect", "svg")
-            this.selectionRect2!.setAttribute("x", `${bbox.x}`)
-            this.selectionRect2!.setAttribute("y", `${bbox.y}`)
-            this.selectionRect2!.setAttribute("height", `${bbox.height}`)
-            this.selectionRect2!.setAttribute("width", `${bbox.width}`)
-            this.renderer2.setAttribute(this.selectionRect2, "vector-effect", "non-scaling-stroke")
-            this.renderer2.addClass(this.selectionRect2, "selection-rect2")
-            this.renderer2.appendChild(this.group, this.selectionRect2)
-
-            this.eventService.sendEvent(new ElementSelectedEvent(element))
+            this.store$.dispatch(new ShapeSelectedAction({ selectedShape: selectedShape, group: this.group, renderer: this.renderer2 }))
         }
-    }
-
-    private unselect() {
-        if (this.selectedElement) {
-            this.selectedElement.classList.remove("selected-element")
-        }
-
-        if (this.selectionRect1) {
-            this.renderer2.removeChild(this.group, this.selectionRect1)
-            this.selectionRect1 = undefined
-        }
-
-        if (this.selectionRect2) {
-            this.renderer2.removeChild(this.group, this.selectionRect2)
-            this.selectionRect2 = undefined
-        }
-
-        this.eventService.sendEvent(new ElementDeselectedEvent())
     }
 }

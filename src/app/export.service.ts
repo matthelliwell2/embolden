@@ -5,7 +5,7 @@ import { Commands, CommandService } from "./command.service"
 import { DesignService } from "./design.service"
 import { Shape } from "./models"
 import { select, Store } from "@ngrx/store"
-import { State } from "./store"
+import { AppState } from "./store"
 
 const Buffer = require("buffer/").Buffer
 const dateFormat = require("dateformat")
@@ -16,7 +16,7 @@ const dateFormat = require("dateformat")
 export class ExportService extends Destroyable {
     private scaling: number = 1
 
-    constructor(private commandService: CommandService, private designService: DesignService, private store: Store<State>) {
+    constructor(private commandService: CommandService, private designService: DesignService, private store$: Store<AppState>) {
         super()
         console.log("ExportService started")
 
@@ -31,10 +31,10 @@ export class ExportService extends Destroyable {
                 }
             })
 
-        this.store
+        this.store$
             .pipe(
-                filter(state => state.design !== undefined),
-                select(state => state.design.scaling),
+                filter(state => state.render !== undefined),
+                select(state => state.render.scaling),
                 takeUntil(this.destroyed)
             )
             .subscribe((scaling: number) => {

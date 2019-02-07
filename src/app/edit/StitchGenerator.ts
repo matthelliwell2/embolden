@@ -5,7 +5,7 @@ import { OptimiserService } from "../optimiser.service"
 import { Destroyable } from "../lib/Store"
 import { ScanLineGenerator } from "./ScanLineGenerator"
 import { select, Store } from "@ngrx/store"
-import { State } from "../store"
+import { AppState } from "../store"
 import { filter, takeUntil } from "rxjs/operators"
 
 const Bezier = require("bezier-js")
@@ -25,13 +25,13 @@ export class StitchGenerator extends Destroyable {
 
     private scaling: number
 
-    constructor(private scanLineGenerator: ScanLineGenerator, private optimiserService: OptimiserService, private store: Store<State>) {
+    constructor(private scanLineGenerator: ScanLineGenerator, private optimiserService: OptimiserService, private store$: Store<AppState>) {
         super()
 
-        this.store
+        this.store$
             .pipe(
-                filter(state => state.design !== undefined),
-                select(state => state.design.scaling),
+                filter(state => state.render !== undefined),
+                select(state => state.render.scaling),
                 takeUntil(this.destroyed)
             )
             .subscribe((scaling: number) => {

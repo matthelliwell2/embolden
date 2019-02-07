@@ -5,8 +5,8 @@ import { Destroyable } from "../lib/Store"
 import { RenderSettings, RenderSettingsStore } from "../settings/render-settings/RenderSettingsStore"
 import { Colour } from "../palette/palette.service"
 import { select, Store } from "@ngrx/store"
-import { State } from "../store"
-import { DesignState } from "../store/file/file.reducer"
+import { AppState } from "../store"
+import { RenderState } from "../store/file/file.reducer"
 
 /**
  * This is responsible for rendering an image of the stitches onto the screen
@@ -25,19 +25,19 @@ export class StitchRenderer extends Destroyable {
     private markerCircle: SVGMarkerElement
     private markerSolidCircle: SVGMarkerElement
 
-    constructor(rendererFactory: RendererFactory2, private renderSettingsStore: RenderSettingsStore, private store: Store<State>) {
+    constructor(rendererFactory: RendererFactory2, private renderSettingsStore: RenderSettingsStore, private store$: Store<AppState>) {
         super()
         this.renderer = rendererFactory.createRenderer(null, null)
         this.renderSettings = renderSettingsStore.state
 
-        this.store
+        this.store$
             .pipe(
-                select(state => state.design),
-                filter(design => design !== undefined),
+                select(state => state.render),
+                filter(render => render !== undefined),
                 takeUntil(this.destroyed)
             )
-            .subscribe((design: DesignState) => {
-                this.onFileLoaded(design.root, design.scaling)
+            .subscribe((render: RenderState) => {
+                this.onFileLoaded(render.root, render.scaling)
             })
 
         this.renderSettingsStore.stream.pipe(takeUntil(this.destroyed)).subscribe(this.onRenderSettingsChanged)
@@ -68,7 +68,7 @@ export class StitchRenderer extends Destroyable {
     }
 
     updateFillColour(shape: Shape, colour: Colour): void {
-        const id = shape.element.getAttribute("id")
+        const id = shape.id
         this.stitchGroup.childNodes.forEach(node => {
             const element = node as SVGElement
             if (element.id === id) {
@@ -164,7 +164,7 @@ export class StitchRenderer extends Destroyable {
     }
 
     private deleteStitchesFromGroup(shape: Shape): void {
-        const id = shape.element.getAttribute("id")
+        const id = shape.id
         const nodesToRemove: ChildNode[] = []
         this.stitchGroup.childNodes.forEach(node => {
             if ((<SVGElement>node).getAttribute("id") === id) {
@@ -187,7 +187,7 @@ export class StitchRenderer extends Destroyable {
             element.setAttribute("fill", "none")
             element.setAttribute("d", path)
             element.setAttribute("class", "stitchablePath")
-            element.setAttribute("id", shape.element.getAttribute("id")!)
+            element.setAttribute("id", shape.id)
 
             if (colour) {
                 element.setAttribute("stroke", colour.value)

@@ -7,7 +7,7 @@ import { ExportTypes } from "../export.service"
 import { Destroyable } from "../lib/Store"
 import { filter, takeUntil } from "rxjs/operators"
 import { LoadFileAction } from "../store/file/file.actions"
-import { State } from "../store"
+import { AppState } from "../store"
 
 @Component({
     selector: "app-toolbar",
@@ -28,10 +28,10 @@ export class ToolbarComponent extends Destroyable {
     // This is a reference to the hidden input type='file' component
     @ViewChild("file") file
 
-    constructor(private store: Store<State>, private commandService: CommandService, private modalService: NgbModal) {
+    constructor(private store$: Store<AppState>, private commandService: CommandService, private modalService: NgbModal) {
         super()
 
-        this.store
+        this.store$
             .pipe(
                 select(state => state.design),
                 filter(design => design !== undefined),
@@ -59,7 +59,7 @@ export class ToolbarComponent extends Destroyable {
      */
     onFilesAdded(): void {
         const file = this.file.nativeElement.files[0] as File
-        this.store.dispatch(new LoadFileAction({ file: file }))
+        this.store$.dispatch(new LoadFileAction({ file: file }))
     }
 
     /**

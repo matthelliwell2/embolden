@@ -7,15 +7,29 @@ import Point = SvgPanZoom.Point
 
 export interface DesignState {
     name: string
-    scaling: number
     shapes: Map<string, Shape>
-    root: SVGSVGElement
 }
 
-export const reducer = (state: DesignState, action: FileActions): DesignState => {
+export interface RenderState {
+    root: SVGSVGElement
+    scaling: number
+}
+
+export const renderReducer = (state: RenderState, action: FileActions): RenderState => {
     switch (action.type) {
         case FileActionTypes.SVG_FILE_RENDERED:
-            console.log("SVG_FILE_RENDERED reducer")
+            console.log("renderReducer: SVG_FILE_RENDERED")
+            return { scaling: calculateScalingFactor(action.payload.root), root: action.payload.root }
+
+        default:
+            return state
+    }
+}
+
+export const designReducer = (state: DesignState, action: FileActions): DesignState => {
+    switch (action.type) {
+        case FileActionTypes.SVG_FILE_RENDERED:
+            console.log("designReducer: SVG_FILE_RENDERED")
             // The SVG file has been rendered in the container so we can do our post-rendering processing before updating the shape. We could do this processing in an effect
             // but then we'd have to add another event to store it in the state which seem an unnecessary complexity.
             deleteMarkerDefs(action.payload.root)
@@ -26,7 +40,7 @@ export const reducer = (state: DesignState, action: FileActions): DesignState =>
             adjustPathsForIntersectionLibrary(shapes)
             removeStylesApartFromFill(shapes)
 
-            return { name: action.payload.name, shapes: shapes, scaling: calculateScalingFactor(action.payload.root), root: action.payload.root }
+            return { name: action.payload.name, shapes: shapes }
         default:
             return state
     }
